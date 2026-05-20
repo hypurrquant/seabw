@@ -108,6 +108,12 @@ export class MarketplaceService {
         ok: true,
       });
       return { status: 200, body: { plan: result.plan } };
+    } catch (err) {
+      const message = (err as Error).message ?? "Unknown error";
+      return {
+        status: 500,
+        body: { error: `Couldn't build basket plan: ${message}` },
+      };
     } finally {
       clearTimeout(budgetTimer);
       controller.abort();

@@ -4,11 +4,16 @@ DeFi robo-advisor — 자연어 목표를 받아 티어/체인/화이트리스�
 
 ## 현재 페이즈
 
-- **버전**: v1.0.0
-- **기능**: pnpm 모노레포 + NestJS 서버 + Codex agent (Anthropic SDK 제거)
-- **상태**: ✅ 완료 (Step 5 — 개발)
-- **문서**: [docs/phases/v1.0.0-monorepo-codex/](docs/phases/v1.0.0-monorepo-codex/)
-- **시작·완료일**: 2026-05-20
+- **버전**: v1.1.0
+- **기능**: HypurrQuant LP read+write+pipeline+AI execution 이식 + defi-cli 폐기
+- **상태**: Step 1 — PRD
+- **문서**: [docs/phases/v1.1.0-hq-lp-pipeline/](docs/phases/v1.1.0-hq-lp-pipeline/)
+- **시작일**: 2026-05-20
+
+## 이전 페이즈
+
+- **v1.0.1** — v1.0.0 controller 이전 과정의 회귀 8건 + 추가 2건 패치 (실패 audit log, retry-after 헤더, intent abort wiring, validation envelope 원형, rehydrate schema parse, portfolio 502). codex 재검증 OK. 2026-05-20 완료. [문서](docs/phases/v1.0.1-regression-fixes/)
+- **v1.0.0** — pnpm 모노레포 + NestJS 서버 + Codex agent (Anthropic SDK 제거). 2026-05-20 완료. [문서](docs/phases/v1.0.0-monorepo-codex/)
 
 ## 구조
 
@@ -18,7 +23,10 @@ apps/
   server/        # @seabw/server — NestJS 11 + 4 도메인(plan/marketplace/precheck/portfolio) + agent
   web/           # @seabw/web — Next.js 15 UI only (API Route 없음)
 src/             # 휴면(보존) — phase 시작 시점 그대로
-docs/phases/v1.0.0-monorepo-codex/  # PRD/design/DoD/tickets
+docs/phases/
+  v1.0.0-monorepo-codex/        # 완료 — 모노레포 + NestJS + Codex agent
+  v1.0.1-regression-fixes/      # 완료 — v1.0.0 회귀 패치
+  v1.1.0-hq-lp-pipeline/        # 진행중 — HQ LP read+write+pipeline+AI 이식 + defi-cli 폐기
 ```
 
 ## 부팅

@@ -10,5 +10,7 @@ export abstract class AgentLLMPort {
     systemPrompt: string;
     messages: ReadonlyArray<LLMMessage>;
     context: { sessionKey: string };
+    /** 외부에서 spawn된 자식 프로세스를 즉시 종료하도록 신호. */
+    signal?: AbortSignal;
   }): Observable<AgentSSEEvent>;
 }

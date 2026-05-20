@@ -5,6 +5,7 @@ import {
   type PipelinePlan,
   type PlanRequest,
 } from "@seabw/core";
+import { PipelinePlanSchema } from "@seabw/core";
 import { composePlan, tryHydrateCalldata } from "./internal/composer";
 import { evaluatePlan } from "./internal/guardrails";
 import { anonId, logPlanRequest } from "./internal/audit-log";
@@ -122,6 +123,23 @@ export class PlanService {
 
       rememberPlan(result.plan, input.wallet.address);
       return { kind: "ok", status: 200, body: { plan: result.plan } };
+    } catch (err) {
+      const message = (err as Error).message ?? "Unknown error";
+      logPlanRequest({
+        ts: new Date().toISOString(),
+        anonId: anonId(ip, input.wallet.address),
+        tier: input.tier,
+        intentLen: input.intentText.length,
+        appliedRules: [],
+        rejectedRuleId: "agent.error",
+        durationMs: Date.now() - start,
+        ok: false,
+      });
+      return {
+        kind: "rejected",
+        status: 500,
+        body: { error: `We couldn't build a safe plan for that. ${message}` },
+      };
     } finally {
       clearTimeout(budgetTimer);
       controller.abort();
@@ -155,7 +173,7 @@ export class PlanService {
           kind: "rejected",
           status: 422,
           body: {
-            error: `Plan contains step kinds not yet wired through defi-cli: ${unsupported.join(", ")}.`,
+            error: `Plan contains step kinds not yet wired through defi-cli: ${unsupported.join(", ")}. Cannot rebind to your address in live mode.`,
           },
         };
       }
@@ -179,7 +197,7 @@ export class PlanService {
       }
     }
     const marker = `rehydrate:${signerAddress.slice(0, 6).toLowerCase()}…${signerAddress.slice(-4)}`;
-    const refreshed: PipelinePlan = {
+    const draft: PipelinePlan = {
       ...entry.plan,
       steps: rebuiltSteps,
       createdAt: new Date().toISOString(),
@@ -190,7 +208,8 @@ export class PlanService {
           : [...entry.plan.guardrails.appliedRules, marker],
       },
     };
-    rememberPlan(refreshed, signerAddress);
-    return { kind: "ok", status: 200, body: { plan: refreshed } };
+    const validated = PipelinePlanSchema.parse(draft);
+    rememberPlan(validated, signerAddress);
+    return { kind: "ok", status: 200, body: { plan: validated } };
   }
 }

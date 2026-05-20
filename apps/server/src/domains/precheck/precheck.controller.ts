@@ -16,7 +16,7 @@ export class PrecheckController {
   constructor(private readonly precheck: PrecheckService) {}
 
   @Post()
-  @UsePipes(new ZodValidationPipe(PrecheckSchema))
+  @UsePipes(new ZodValidationPipe(PrecheckSchema, { errorMessage: "Invalid precheck payload" }))
   async run(@Body() body: PrecheckRequest, @Res() res: Response): Promise<void> {
     const result = await this.precheck.run(body.planId, body.stepId, body.signerAddress);
     res.status(result.status).json(result.body);

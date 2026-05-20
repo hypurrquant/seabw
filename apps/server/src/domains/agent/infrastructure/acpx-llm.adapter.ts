@@ -20,13 +20,20 @@ export class AcpxLLMAdapter extends AgentLLMPort {
     systemPrompt: string;
     messages: ReadonlyArray<LLMMessage>;
     context: { sessionKey: string };
+    signal?: AbortSignal;
   }): Observable<AgentSSEEvent> {
     return new Observable((subscriber) => {
       const child = this.spawnAcpx(params, params.context.sessionKey, subscriber);
+      const onAbort = (): void => {
+        if (child && !child.killed) child.kill("SIGTERM");
+      };
+      if (params.signal) {
+        if (params.signal.aborted) onAbort();
+        else params.signal.addEventListener("abort", onAbort, { once: true });
+      }
       return () => {
-        if (child && !child.killed) {
-          child.kill("SIGTERM");
-        }
+        if (params.signal) params.signal.removeEventListener("abort", onAbort);
+        if (child && !child.killed) child.kill("SIGTERM");
       };
     });
   }

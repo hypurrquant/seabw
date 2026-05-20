@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   HttpException,
-  InternalServerErrorException,
   Query,
   Req,
 } from "@nestjs/common";
@@ -49,9 +48,12 @@ export class PortfolioController {
       const health = await this.portfolio.health(address, chainId);
       return { health };
     } catch (err) {
-      throw new InternalServerErrorException({
-        error: "Failed to read portfolio: " + ((err as Error).message ?? "unknown").split("\n")[0],
-      });
+      throw new HttpException(
+        {
+          error: "Failed to read portfolio: " + ((err as Error).message ?? "unknown").split("\n")[0],
+        },
+        502,
+      );
     }
   }
 }

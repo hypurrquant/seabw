@@ -73,7 +73,7 @@ export class MarketplaceController {
   }
 
   @Post("plan")
-  @UsePipes(new ZodValidationPipe(BasketPlanSchema))
+  @UsePipes(new ZodValidationPipe(BasketPlanSchema, { errorMessage: "Invalid basket request" }))
   async composePlan(
     @Body() body: MarketplacePlanRequest,
     @Req() req: Request,

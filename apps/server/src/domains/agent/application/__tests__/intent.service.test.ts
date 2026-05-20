@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Observable, of } from "rxjs";
-import { IntentService } from "../intent.service";
+import { IntentService, IntentAbortError } from "../intent.service";
 import { AgentLLMPort } from "../../domain/agent-llm.port";
 import type { AgentSSEEvent } from "../../domain/agent.types";
 
@@ -47,5 +47,16 @@ describe("IntentService", () => {
     expect(r.asset.symbol).toBe("USDT");
     expect(r.amount).toBe("10000");
     expect(r.horizon).toBe("long");
+  });
+
+  test("propagates IntentAbortError when caller signal aborted", async () => {
+    const llm = mockLlm([
+      { event: "stream", data: { delta: "" } },
+      { event: "done", data: { sessionId: "s" } },
+    ]);
+    const svc = new IntentService(llm);
+    const ctrl = new AbortController();
+    ctrl.abort();
+    await expect(svc.parse("$1 ETH", 8453, ctrl.signal)).rejects.toBeInstanceOf(IntentAbortError);
   });
 });

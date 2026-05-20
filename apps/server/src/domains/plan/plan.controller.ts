@@ -32,7 +32,7 @@ export class PlanController {
   constructor(private readonly planService: PlanService) {}
 
   @Post()
-  @UsePipes(new ZodValidationPipe(PlanRequestSchema))
+  @UsePipes(new ZodValidationPipe(PlanRequestSchema, { errorMessage: "Invalid plan request" }))
   async create(
     @Body() body: PlanRequest,
     @Req() req: Request,
@@ -41,7 +41,11 @@ export class PlanController {
     const ip = clientIp(req);
     const rate = rateLimit(`plan:${ip}`, 10, 60_000);
     if (!rate.allowed) {
-      throw new HttpException({ error: "Too many plan requests. Please wait." }, 429);
+      res
+        .setHeader("retry-after", Math.ceil(rate.retryAfterMs / 1000).toString())
+        .status(429)
+        .json({ error: "Too many plan requests. Please wait." });
+      return;
     }
     if (process.env.DEFIPILOT_DISABLE_EXEC === "true") {
       throw new ServiceUnavailableException({
@@ -53,7 +57,7 @@ export class PlanController {
   }
 
   @Post("rehydrate")
-  @UsePipes(new ZodValidationPipe(RehydrateSchema))
+  @UsePipes(new ZodValidationPipe(RehydrateSchema, { errorMessage: "Invalid rehydrate payload" }))
   async rehydrate(
     @Body() body: PlanRehydrateRequest,
     @Res() res: Response,
