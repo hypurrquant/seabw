@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
-  transpilePackages: ["@seabw/core"],
   webpack(cfg) {
     cfg.externals = [
       ...(cfg.externals ?? []),

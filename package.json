@@ -1,6 +1,6 @@
 {
   "name": "seabw",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "packageManager": "pnpm@10.0.0",
   "engines": {
@@ -8,18 +8,12 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "pnpm --parallel -r --filter \"@seabw/server\" --filter \"@seabw/web\" run dev",
-    "dev:server": "pnpm --filter @seabw/server run start:dev",
-    "dev:web": "pnpm --filter @seabw/web run dev",
-    "build": "pnpm -r run build",
-    "build:server": "pnpm --filter @seabw/server run build",
-    "build:web": "pnpm --filter @seabw/web run build",
-    "test": "pnpm -r run test",
-    "lint": "pnpm -r run lint",
-    "typecheck": "pnpm -r exec tsc --noEmit",
-    "verify:dod": "bash scripts/verify-dod.sh",
-    "test:e2e": "playwright test",
-    "test:e2e:prod": "playwright test --config playwright.prod.config.ts"
+    "dev": "pnpm --filter @seabw/web run dev",
+    "build": "pnpm --filter @seabw/web run build",
+    "test": "pnpm --filter @seabw/web run test",
+    "lint": "pnpm --filter @seabw/web run lint",
+    "typecheck": "pnpm --filter @seabw/web exec tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

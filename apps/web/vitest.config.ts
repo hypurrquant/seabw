@@ -10,7 +10,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@seabw/core": path.resolve(__dirname, "../core"),
     },
   },
 });
