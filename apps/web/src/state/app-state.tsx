@@ -12,15 +12,31 @@ import type { Answers, TierResult } from "@/domains/survey/lib";
 
 export type Stage =
   | "landing"
+  | "connect-wallet"
   | "survey"
   | "tier-result"
-  | "connect-wallet"
   | "chat";
+
+export type AuthStatus =
+  | "idle"
+  | "connected"
+  | "authenticating"
+  | "authed"
+  | "error";
+
+export interface AuthState {
+  status: AuthStatus;
+  ownerAddress?: `0x${string}`;
+  token?: string;
+  tokenExpiresAt?: number;
+  error?: string;
+}
 
 export interface AppState {
   stage: Stage;
   answers?: Answers;
   tier?: TierResult;
+  auth: AuthState;
   lastError?: string;
 }
 
@@ -29,14 +45,38 @@ type Action =
   | { type: "SET_ANSWERS"; answers: Answers }
   | { type: "SET_TIER"; tier: TierResult }
   | { type: "ERROR"; message: string }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "AUTH_WALLET_CONNECTED"; address: `0x${string}` }
+  | { type: "AUTH_STARTED" }
+  | {
+      type: "AUTH_VERIFIED";
+      address: `0x${string}`;
+      token: string;
+      expiresAt: number;
+    }
+  | { type: "AUTH_FAILED"; error: string }
+  | { type: "AUTH_RESET" };
 
-const INITIAL: AppState = { stage: "landing" };
+const INITIAL: AppState = {
+  stage: "landing",
+  auth: { status: "idle" },
+};
+
+const PROTECTED_STAGES: ReadonlySet<Stage> = new Set([
+  "survey",
+  "tier-result",
+  "chat",
+]);
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case "GOTO":
-      return { ...state, stage: action.stage, lastError: undefined };
+    case "GOTO": {
+      const requested = action.stage;
+      const allowed =
+        !PROTECTED_STAGES.has(requested) || state.auth.status === "authed";
+      const next: Stage = allowed ? requested : "connect-wallet";
+      return { ...state, stage: next, lastError: undefined };
+    }
     case "SET_ANSWERS":
       return { ...state, answers: action.answers };
     case "SET_TIER":
@@ -45,6 +85,39 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, lastError: action.message };
     case "RESET":
       return INITIAL;
+    case "AUTH_WALLET_CONNECTED": {
+      if (
+        state.auth.ownerAddress?.toLowerCase() === action.address.toLowerCase()
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        auth: { status: "connected", ownerAddress: action.address },
+      };
+    }
+    case "AUTH_STARTED":
+      return {
+        ...state,
+        auth: { ...state.auth, status: "authenticating", error: undefined },
+      };
+    case "AUTH_VERIFIED":
+      return {
+        ...state,
+        auth: {
+          status: "authed",
+          ownerAddress: action.address,
+          token: action.token,
+          tokenExpiresAt: action.expiresAt,
+        },
+      };
+    case "AUTH_FAILED":
+      return {
+        ...state,
+        auth: { ...state.auth, status: "error", error: action.error },
+      };
+    case "AUTH_RESET":
+      return { ...state, auth: { status: "idle" } };
   }
 }
 

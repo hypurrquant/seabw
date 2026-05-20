@@ -95,10 +95,10 @@ export function TierResultView({ readOnly = false }: { readOnly?: boolean } = {}
         {!readOnly && (
           <div className="pt-2 flex flex-col gap-3">
             <Button
-              onClick={() => dispatch({ type: "GOTO", stage: "connect-wallet" })}
+              onClick={() => dispatch({ type: "GOTO", stage: "chat" })}
               className="self-start"
             >
-              지갑 연결 후 AI와 대화 시작 →
+              AI와 대화 시작 →
             </Button>
             <Button variant="ghost" className="self-start" onClick={() => dispatch({ type: "GOTO", stage: "survey" })}>
               ← Retake the survey

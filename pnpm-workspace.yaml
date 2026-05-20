@@ -1,2 +1,3 @@
 packages:
   - "apps/*"
+  - "../../side-project/HypurrQuant_FE/worktrees/seabw-integration/packages/*"

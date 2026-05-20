@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
+    "composite": false,
     "target": "ES2022",
     "lib": [
       "dom",
@@ -21,6 +21,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@hq/core/*": [
+        "../../../../side-project/HypurrQuant_FE/worktrees/seabw-integration/packages/core/*"
+      ],
+      "@hq/react/*": [
+        "../../../../side-project/HypurrQuant_FE/worktrees/seabw-integration/packages/react/*"
       ]
     },
     "allowJs": true

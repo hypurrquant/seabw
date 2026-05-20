@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { LineChart, ShieldAlert } from "lucide-react";
+import { WalletBadge } from "./wallet-badge";
 
-// Global header — brand on the left, secondary nav on the right. Sits above
-// the stage indicator on flow pages and is the only sticky bar; the indicator
-// scrolls with content so the two never stack on top of each other.
+// Global header — brand on the left, secondary nav + wallet badge on the right.
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-[color:var(--color-border)] bg-[color:var(--color-bg)]/85 backdrop-blur-md">
@@ -31,6 +30,9 @@ export function SiteHeader() {
             <ShieldAlert size={14} strokeWidth={2} />
             <span className="hidden sm:inline">Risks</span>
           </Link>
+          <div className="ml-2">
+            <WalletBadge />
+          </div>
         </nav>
       </div>
     </header>

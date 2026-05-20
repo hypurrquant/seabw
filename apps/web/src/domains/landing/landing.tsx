@@ -38,10 +38,10 @@ export function Landing() {
           <div className="mt-2 flex flex-col gap-3">
             <Button
               size="lg"
-              onClick={() => dispatch({ type: "GOTO", stage: "survey" })}
+              onClick={() => dispatch({ type: "GOTO", stage: "connect-wallet" })}
               className="group w-fit"
             >
-              Start the 1-page risk quiz
+              Connect wallet to start
               <ArrowRight
                 size={16}
                 strokeWidth={2}

@@ -1,10 +1,10 @@
 "use client";
 
-import { AppStateProvider, useApp } from "@/state/app-state";
+import { useApp } from "@/state/app-state";
 import { Landing } from "@/domains/landing/landing";
 import { Survey } from "@/domains/survey/survey";
 import { TierResultView } from "@/domains/survey/tier-result";
-import { ConnectWallet } from "@/domains/wallet/connect-wallet";
+import { ConnectWalletStage } from "@/domains/wallet/connect-wallet-stage";
 import { Chat } from "@/domains/chat/chat";
 
 function Router() {
@@ -12,12 +12,12 @@ function Router() {
   switch (state.stage) {
     case "landing":
       return <Landing />;
+    case "connect-wallet":
+      return <ConnectWalletStage />;
     case "survey":
       return <Survey />;
     case "tier-result":
       return <TierResultView />;
-    case "connect-wallet":
-      return <ConnectWallet />;
     case "chat":
       return (
         <div className="grid min-h-[calc(100dvh-2.5rem)] grid-cols-1 lg:grid-cols-2">
@@ -35,9 +35,5 @@ function Router() {
 }
 
 export default function HomePage() {
-  return (
-    <AppStateProvider>
-      <Router />
-    </AppStateProvider>
-  );
+  return <Router />;
 }
