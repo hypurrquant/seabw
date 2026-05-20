@@ -1,16 +1,11 @@
 "use client";
 
 import { AppStateProvider, useApp } from "@/state/app-state";
-import { Landing } from "@/components/landing";
-import { Survey } from "@/components/survey";
-import { TierResultView } from "@/components/tier-result";
-import { ConnectWallet } from "@/components/connect-wallet";
-import { IntentInput } from "@/components/intent-input";
-import { PlanReview } from "@/components/plan-review";
-import { PortfolioSummary } from "@/components/portfolio-summary";
-import { Marketplace } from "@/components/marketplace";
-import { BasketReview } from "@/components/basket-review";
-import { StageIndicator } from "@/components/stage-indicator";
+import { Landing } from "@/domains/landing/landing";
+import { Survey } from "@/domains/survey/survey";
+import { TierResultView } from "@/domains/survey/tier-result";
+import { ConnectWallet } from "@/domains/wallet/connect-wallet";
+import { Chat } from "@/domains/chat/chat";
 
 function Router() {
   const { state } = useApp();
@@ -23,17 +18,17 @@ function Router() {
       return <TierResultView />;
     case "connect-wallet":
       return <ConnectWallet />;
-    case "intent":
-      return <IntentInput />;
-    case "marketplace":
-      return <Marketplace />;
-    case "basket-review":
-      return <BasketReview />;
-    case "plan-review":
-      return <PlanReview />;
-    case "execution":
-    case "portfolio":
-      return <PortfolioSummary />;
+    case "chat":
+      return (
+        <div className="grid min-h-[calc(100dvh-2.5rem)] grid-cols-1 lg:grid-cols-2">
+          <aside className="overflow-y-auto border-b lg:border-b-0 lg:border-r border-[color:var(--color-border)]">
+            <TierResultView readOnly />
+          </aside>
+          <section className="flex h-full flex-col overflow-hidden">
+            <Chat />
+          </section>
+        </div>
+      );
     default:
       return <Landing />;
   }
@@ -42,7 +37,6 @@ function Router() {
 export default function HomePage() {
   return (
     <AppStateProvider>
-      <StageIndicator />
       <Router />
     </AppStateProvider>
   );
