@@ -1,4 +1,7 @@
 node_modules
+apps/*/node_modules
+apps/*/dist
+apps/*/.next
 .next
 .env.local
 .env*.local
