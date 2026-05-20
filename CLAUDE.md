@@ -4,11 +4,14 @@ DefiPilot — KOFIA 기반 설문으로 투자자 성향을 진단하고, Hypurr
 
 ## 현재 페이즈
 
-- **버전**: v1.2.1
-- **기능**: Wallet SIWE Auth — wagmi + HQ SIWE(`/agent/auth/challenge`·`/verify`) → JWT 토큰 attach, dev-bypass 제거, landing 직후 wallet stage + 상단 wallet 헤더 + connect 모달
-- **상태**: Step 1 - PRD
+- **버전**: v1.2.1 (scope 확장 — 2차)
+- **기능**: 1차 Wallet SIWE Auth (✅ 완료) + 2차 **AI Tool Loop** — HQ `@hq/react/agent` 재사용 + 21개 HQ tool 핸들러 이식 + `propose_lp_positions` 신규 + LP 카드 3장 UI + compose_pipeline 흐름 + wagmi 서명
+- **상태**: ✅ 완료 (Step 5A 구현 완료, Step 5B 최종 게이트 대기)
 - **문서**: [docs/phases/v1.2.1-wallet-siwe-auth/](docs/phases/v1.2.1-wallet-siwe-auth/)
+- **Codex Session ID**: `/Users/mousebook/Documents/hypurrquant/seabw/docs/phases/v1.2.1-wallet-siwe-auth`
+- **데모**: 2026-05-21
 - **시작일**: 2026-05-20
+- **완료일**: 2026-05-20
 
 ## 이전 페이즈
 
@@ -27,8 +30,10 @@ apps/web/src/
 ├─ domains/
 │  ├─ landing/landing.tsx
 │  ├─ survey/{survey,tier-result,lib}.{tsx,ts}
-│  ├─ wallet/connect-wallet.tsx
-│  ├─ chat/chat.tsx                  # placeholder (v1.2.0 구현)
+│  ├─ wallet/{connect-wallet-panel,connect-wallet-stage,connect-wallet-modal,wallet-modal-context}.tsx
+│  ├─ auth/{use-siwe-auth,hq-client-provider}.{ts,tsx}   # v1.2.1
+│  ├─ chat/{chat,lp-cards,pipeline-ready-card}.tsx  # v1.2.1 AI Tool Loop UI
+│  ├─ agent/{providers,runtime,store,tools}/         # v1.2.1 HQ agent/tool runtime
 │  └─ portfolio/                     # 후속 phase 자리만 확보
 ├─ components/{ui,providers,site-header,demo-banner}.tsx   # 공유 UI
 ├─ lib/{wagmi,chains,utils}.ts                              # 공유 인프라
@@ -39,7 +44,8 @@ docs/phases/
   v1.0.1-regression-fixes/      # 완료
   v1.1.0-hq-backbone/           # 완료 — apps/server·core 통째 삭제, HQ backbone 채택
   v1.1.1-domain-refactor/       # 완료 — domain-oriented 폴더로 재배치
-  v1.2.0-chat-and-report-split/ # 진행중 — split-screen + HQ chat + wagmi sign loop
+  v1.2.0-chat-and-report-split/ # 완료 — split-screen + HQ chat
+  v1.2.1-wallet-siwe-auth/      # 완료 — SIWE + AI Tool Loop
 ```
 
 v1.1.0에서 `apps/server`, `apps/core`는 통째로 제거됐고 모든 책임은 외부 HypurrQuant apps/server가 가져간다.
@@ -51,17 +57,21 @@ seabw web은 survey + tendency 변환 + HQ chat 호출 + wagmi 서명만 담당.
 # 1) seabw web 부팅
 pnpm install
 cp apps/web/.env.local.example apps/web/.env.local
+# apps/web/.env.local:
+# NEXT_PUBLIC_HQ_ORIGIN=http://localhost:3003
+# NEXT_PUBLIC_HQ_BASE_URL=http://localhost:3003/api/v1
 pnpm dev                      # apps/web only, http://localhost:3000
 
-# 2) HypurrQuant backbone (별 터미널)
-cd /Users/mousebook/Documents/side-project/HypurrQuant_FE/worktrees/seabw-integration
-# 최초 1회: pnpm install (+ wasm-crypto pkg/ 생성)
-AGENT_STORAGE_MODE=none \
-AGENT_AUTH_DEV_BYPASS=1 \
-AGENT_AUTH_DEV_WALLET=0x0000000000000000000000000000000000000abc \
-AGENT_SYSTEM_PROMPT_FILE=/Users/mousebook/Documents/hypurrquant/seabw/docs/seabw-system-prompt.md \
-  pnpm dev:server             # HQ NestJS — chat + pipeline + MCP, http://localhost:3001
+# 2) HypurrQuant backbone — Docker compose (권장)
+cd /Users/mousebook/Documents/side-project/HypurrQuant_FE/worktrees/seabw-integration/apps/server
+docker start mongo hypurrquant-server-redis-1   # 기존 인프라 컨테이너 재기동
+docker compose -f docker-compose.local.yml up -d --build api
+# → hq-api on http://localhost:3003 (route prefix /api/v1)
+# → AGENT_SYSTEM_PROMPT_FILE 은 .env.local + compose volume 으로 자동 주입
+# → AGENT_AUTH_DEV_BYPASS 는 v1.2.1 부터 사용 안 함 (SIWE 필수)
 ```
+
+`apps/web/.env.local` 의 `NEXT_PUBLIC_HQ_ORIGIN=http://localhost:3003` 와 `NEXT_PUBLIC_HQ_BASE_URL=http://localhost:3003/api/v1` 사용.
 
 ## Codex (acpx) 사전 조건
 
