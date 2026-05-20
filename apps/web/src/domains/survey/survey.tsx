@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { SURVEY_QUESTIONS, deriveTier, cacheTier } from "@seabw/core";
+import { SURVEY_QUESTIONS, deriveTier, cacheTier } from "./lib";
 import type {
   AgeBucket,
   Answers,
   AnswerScore,
   DefiExperienceCategory,
-} from "@seabw/core";
+} from "./lib";
 import { Button, Card, ProgressBar, Pill } from "@/components/ui";
 import { useApp } from "@/state/app-state";
 import { cn } from "@/lib/utils";

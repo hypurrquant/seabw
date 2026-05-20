@@ -1,16 +1,91 @@
-import type {
-  AgeBucket,
-  Answers,
-  AnswerScore,
-  DefiExperienceCategory,
-  Tier,
-  TierResult,
-} from "../types";
+import { z } from "zod";
 
-// 8 scored questions + 2 meta fields (1 meta step in the UI consent screen).
-// Modelled on KOFIA 일반투자자 투자정보확인서 (Toss Invest 별지 제1호),
-// adapted for DeFi product surfaces. derivativeExp is the 8th question and
-// is gate-only — it is not summed into rawScore.
+// --- Types ---------------------------------------------------------------
+
+export type QuestionId =
+  | "horizon"
+  | "allocation"
+  | "experienceProducts"
+  | "experienceYears"
+  | "returnAttitude"
+  | "lossTolerance"
+  | "literacy"
+  | "derivativeExp";
+
+export type AnswerScore = 1 | 2 | 3 | 4;
+export type DefiExperienceCategory = "swap" | "lending" | "lp" | "leverage" | "perp";
+export type AgeBucket = "under65" | "over65";
+
+export interface Answers {
+  horizon: AnswerScore;
+  allocation: AnswerScore;
+  experienceProducts: DefiExperienceCategory[];
+  experienceYears: AnswerScore;
+  returnAttitude: AnswerScore;
+  lossTolerance: AnswerScore;
+  literacy: AnswerScore;
+  derivativeExp: AnswerScore;
+  ageBucket: AgeBucket;
+  firstTimeDefiPilot: boolean;
+}
+
+export type Tier =
+  | "preservation"
+  | "conservative"
+  | "balanced"
+  | "aggressive"
+  | "degen";
+
+export interface TierResult {
+  tier: Tier;
+  rawScore: number;
+  derivativeExpScore: AnswerScore;
+  downgradedFromDegen: boolean;
+  vulnerableDowngrade: boolean;
+  reason?: string;
+}
+
+// --- Zod schemas ---------------------------------------------------------
+
+export const AnswerScoreSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+]);
+
+export const DefiExperienceCategorySchema = z.enum([
+  "swap",
+  "lending",
+  "lp",
+  "leverage",
+  "perp",
+]);
+
+export const AgeBucketSchema = z.enum(["under65", "over65"]);
+
+export const AnswersSchema = z.object({
+  horizon: AnswerScoreSchema,
+  allocation: AnswerScoreSchema,
+  experienceProducts: z.array(DefiExperienceCategorySchema),
+  experienceYears: AnswerScoreSchema,
+  returnAttitude: AnswerScoreSchema,
+  lossTolerance: AnswerScoreSchema,
+  literacy: AnswerScoreSchema,
+  derivativeExp: AnswerScoreSchema,
+  ageBucket: AgeBucketSchema,
+  firstTimeDefiPilot: z.boolean(),
+});
+
+export const TierSchema = z.enum([
+  "preservation",
+  "conservative",
+  "balanced",
+  "aggressive",
+  "degen",
+]);
+
+// --- Survey questions ----------------------------------------------------
 
 export type SurveyOption =
   | { kind: "single"; label: string; score: AnswerScore; description?: string }
@@ -160,28 +235,10 @@ export const DEGEN_DOWNGRADE_REASON =
 export const VULNERABLE_DOWNGRADE_REASON =
   "Vulnerable-consumer self-check (age 65+ or first-time DeFi user) triggered an automatic one-tier downgrade. We will not raise it again without your explicit re-confirmation.";
 
-// KOFIA Toss-Invest scoring adapted for DeFi:
-// - Q1 horizon                : 1→1, 2→2, 3→3, 4→4
-// - Q2 allocation             : 1→1, 2→2, 3→3, 4→4  (more allocation = need to be more cautious, so we invert)
-// - Q3 experience (products)  : highest of {leverage/perp=5, lp=3, lending/swap=1}
-// - Q3' experience (years)    : 1→0, 2→1, 3→3, 4→5
-// - Q4 returnAttitude         : 1→1, 2→2, 3→3, 4→5
-// - Q5 lossTolerance          : 1→1, 2→3, 3→4, 4→5
-// - Q6 literacy               : 1→1, 2→2, 3→3, 4→4
-// - Q8 derivativeExp          : NOT in sum; gates Degen only.
-//
-// Min/max:
-// - Horizon 1..4, Allocation 1..4 (inverted via 5−x  so smaller alloc → safer),
-//   Experience cat 1..5 + years 0..5 = 1..10,
-//   Return 1..5, Loss 1..5, Literacy 1..4
-// - Total = (1..4) + (1..4) + (0..5) + (0..5) + (1..5) + (1..5) + (1..4) = 5..32
-//
-// Vulnerable consumer (over65 OR firstTimeDefiPilot) downgrades one tier
-// after band lookup. Derivative experience gate enforces Degen requirements.
+// --- Scoring -------------------------------------------------------------
 
 function inverseAllocation(score: AnswerScore): number {
-  // higher allocation% → smaller capacity-to-lose → lower score
-  return 5 - score;
+  return (5 - score) as number;
 }
 
 function experienceProductScore(products: DefiExperienceCategory[]): number {
@@ -226,10 +283,12 @@ export function rawScoreToTier(score: number): Tier {
 export function downgradeOne(tier: Tier): Tier {
   const i = TIER_ORDER.indexOf(tier);
   if (i <= 0) return tier;
-  return TIER_ORDER[i - 1];
+  return TIER_ORDER[i - 1]!;
 }
 
-export function isVulnerableConsumer(a: Pick<Answers, "ageBucket" | "firstTimeDefiPilot">): boolean {
+export function isVulnerableConsumer(
+  a: Pick<Answers, "ageBucket" | "firstTimeDefiPilot">,
+): boolean {
   return a.ageBucket === "over65" || a.firstTimeDefiPilot;
 }
 
@@ -242,7 +301,6 @@ export function deriveTier(answers: Answers): TierResult {
   let vulnerableDowngrade = false;
   const reasons: string[] = [];
 
-  // Derivative experience gate — Degen requires BOTH literacy=4 AND derivativeExp>=3 (1yr+).
   if (tier === "degen") {
     const hasLiteracy = answers.literacy === 4;
     const hasDerivative = answers.derivativeExp >= 3;
@@ -253,12 +311,6 @@ export function deriveTier(answers: Answers): TierResult {
     }
   }
 
-  // Vulnerable consumer downgrade — applies after the Degen gate. Each layer
-  // (Degen gate, vulnerability) drops at most one tier *independently*, so a
-  // user can be hit by both:
-  //   over65 + fully-qualified Degen        → Aggressive (one drop, vulnerable)
-  //   over65 + Degen-score but literacy<4    → Aggressive (gate) → Balanced (vulnerable)
-  // Each layer is at most -1 tier; they compose additively when both fire.
   if (isVulnerableConsumer(answers)) {
     const dropped = downgradeOne(tier);
     if (dropped !== tier) {
@@ -278,11 +330,10 @@ export function deriveTier(answers: Answers): TierResult {
   };
 }
 
-// --- 24-month validity cache ---------------------------------------------
+// --- 24-month validity cache (browser only) ------------------------------
 
 export const TIER_CACHE_KEY = "defipilot:tierResult";
-export const TIER_CACHE_TTL_MS = 24 * 30 * 24 * 60 * 60 * 1000; // 24 months
-// (Approximate as 24*30 days; refresh-prompt before exact expiry.)
+export const TIER_CACHE_TTL_MS = 24 * 30 * 24 * 60 * 60 * 1000;
 
 export interface CachedTierEntry {
   result: TierResult;

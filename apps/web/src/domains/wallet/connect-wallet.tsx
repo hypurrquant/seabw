@@ -5,7 +5,7 @@ import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { Button, Card, Pill } from "@/components/ui";
 import { truncateAddress } from "@/lib/utils";
 import { useApp } from "@/state/app-state";
-import { chainName } from "@seabw/core";
+import { chainName } from "@/lib/chains";
 
 export function ConnectWallet() {
   const { state, dispatch } = useApp();
@@ -15,11 +15,10 @@ export function ConnectWallet() {
 
   useEffect(() => {
     if (status === "connected" && address && state.stage === "connect-wallet") {
-      const next = state.mode === "marketplace" ? "marketplace" : "intent";
-      const t = setTimeout(() => dispatch({ type: "GOTO", stage: next }), 600);
+      const t = setTimeout(() => dispatch({ type: "GOTO", stage: "chat" }), 600);
       return () => clearTimeout(t);
     }
-  }, [status, address, state.stage, state.mode, dispatch]);
+  }, [status, address, state.stage, dispatch]);
 
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-2xl flex-col items-center px-6 py-12">
@@ -40,15 +39,8 @@ export function ConnectWallet() {
               {chainName(chainId ?? 0)}
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-              <Button
-                onClick={() =>
-                  dispatch({
-                    type: "GOTO",
-                    stage: state.mode === "marketplace" ? "marketplace" : "intent",
-                  })
-                }
-              >
-                Continue
+              <Button onClick={() => dispatch({ type: "GOTO", stage: "chat" })}>
+                Continue to chat
               </Button>
               <Button variant="ghost" onClick={() => disconnect()}>
                 Disconnect
@@ -87,7 +79,11 @@ export function ConnectWallet() {
           </>
         )}
       </Card>
-      <Button variant="ghost" className="mt-4" onClick={() => dispatch({ type: "GOTO", stage: "tier-result" })}>
+      <Button
+        variant="ghost"
+        className="mt-4"
+        onClick={() => dispatch({ type: "GOTO", stage: "tier-result" })}
+      >
         Back
       </Button>
     </main>

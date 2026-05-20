@@ -8,10 +8,9 @@ import {
   TIER_LABEL,
   TIER_ORDER,
   TIER_TAGLINE,
-} from "@seabw/core";
-import type { Tier } from "@seabw/core";
+} from "./lib";
+import type { Tier } from "./lib";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 const TIER_COLOR: Record<Tier, string> = {
   preservation: "text-[color:var(--color-conservative)]",
@@ -23,7 +22,7 @@ const TIER_COLOR: Record<Tier, string> = {
 
 const PREV_TIER_KEY = "defipilot:prevTier";
 
-export function TierResultView() {
+export function TierResultView({ readOnly = false }: { readOnly?: boolean } = {}) {
   const { state, dispatch } = useApp();
   const tier = state.tier;
   const [upgradedFrom, setUpgradedFrom] = useState<Tier | null>(null);
@@ -58,9 +57,6 @@ export function TierResultView() {
               Degen gate not met — adjusted to Aggressive
             </div>
             <p className="mt-1 text-sm">{tier.reason}</p>
-            <Link href="/risks" className="mt-1 inline-block text-xs underline text-[color:var(--color-fg-muted)]">
-              Read the DeFi risk page →
-            </Link>
           </div>
         )}
 
@@ -84,9 +80,6 @@ export function TierResultView() {
               Higher tiers unlock higher APR but also unlock new risk surfaces.
               Make sure you can explain IL · Rug pull · MEV before signing anything.
             </p>
-            <Link href="/risks" className="mt-1 inline-block text-xs underline text-[color:var(--color-fg-muted)]">
-              Read the DeFi risk page →
-            </Link>
           </div>
         )}
 
@@ -99,40 +92,19 @@ export function TierResultView() {
           <Bound label="LP cap" value={lpCap(tier.tier)} />
         </div>
 
-        <div className="pt-2 flex flex-col gap-3">
-          <div className="text-xs uppercase tracking-wider text-[color:var(--color-fg-muted)]">
-            How should we deploy your stablecoins?
-          </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <button
-              onClick={() => {
-                dispatch({ type: "SET_MODE", mode: "robo" });
-                dispatch({ type: "GOTO", stage: "intent" });
-              }}
-              className="panel-2 p-4 text-left hover:border-[color:var(--color-accent)]/60"
+        {!readOnly && (
+          <div className="pt-2 flex flex-col gap-3">
+            <Button
+              onClick={() => dispatch({ type: "GOTO", stage: "connect-wallet" })}
+              className="self-start"
             >
-              <div className="text-sm font-medium">AI picks for me</div>
-              <p className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
-                Type an intent, get a tier-compliant plan auto-built. Best when DeFi is new.
-              </p>
-            </button>
-            <button
-              onClick={() => {
-                dispatch({ type: "SET_MODE", mode: "marketplace" });
-                dispatch({ type: "GOTO", stage: "marketplace" });
-              }}
-              className="panel-2 p-4 text-left hover:border-[color:var(--color-accent)]/60"
-            >
-              <div className="text-sm font-medium">I&apos;ll compare myself</div>
-              <p className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
-                Pick pools yourself in a marketplace and basket them. Danawa / Amazon style.
-              </p>
-            </button>
+              지갑 연결 후 AI와 대화 시작 →
+            </Button>
+            <Button variant="ghost" className="self-start" onClick={() => dispatch({ type: "GOTO", stage: "survey" })}>
+              ← Retake the survey
+            </Button>
           </div>
-          <Button variant="ghost" className="self-start" onClick={() => dispatch({ type: "GOTO", stage: "survey" })}>
-            ← Retake the survey
-          </Button>
-        </div>
+        )}
       </Card>
     </main>
   );
