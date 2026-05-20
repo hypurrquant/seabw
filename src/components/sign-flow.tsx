@@ -8,6 +8,7 @@ import {
   useSwitchChain,
   useWaitForTransactionReceipt,
 } from "wagmi";
+import { Check } from "lucide-react";
 import { Button, Card, Pill } from "@/components/ui";
 import type {
   ExecutionResult,
@@ -16,8 +17,19 @@ import type {
   StepStatus,
 } from "@/types";
 import { chainName, CHAINS } from "@/config/chains";
-import { formatUsd, shortHash, truncateAddress } from "@/lib/utils";
+import { cn, formatUsd, shortHash, truncateAddress } from "@/lib/utils";
 import { useApp } from "@/state/app-state";
+
+const ACTION_LABEL: Record<PlanStep["kind"], string> = {
+  swap: "Swap",
+  bridge: "Bridge",
+  "lend.supply": "Supply",
+  "lend.withdraw": "Withdraw",
+  "lp.add": "Add LP",
+  "lp.remove": "Remove LP",
+  "lp.stake": "Stake LP",
+  "lp.claim": "Claim",
+};
 
 interface Props {
   plan: PipelinePlan;
@@ -286,9 +298,48 @@ export function SignFlow({ plan, onClose, onComplete }: Props) {
   const currentStatus = runtime[current.id]?.status;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--color-fg)]/20 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-xl" title={`Sign step ${cursor + 1} of ${plan.steps.length}`}>
-        <div className="flex items-center justify-between gap-2 text-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[color:var(--color-fg)]/20 p-4 backdrop-blur-sm">
+      <Card className="my-auto w-full max-w-xl" title="Sign & execute">
+        {/* Step rail — where you are across the whole pipeline. */}
+        <ol className="flex items-center gap-1.5">
+          {plan.steps.map((s, i) => {
+            const st = runtime[s.id]?.status ?? "pending";
+            const isCurrent = i === cursor;
+            const done = st === "confirmed";
+            const failed = st === "failed";
+            const skipped = st === "skipped";
+            return (
+              <li key={s.id} className="flex flex-1 items-center gap-1.5">
+                <span
+                  className={cn(
+                    "flex h-6 w-6 flex-none items-center justify-center rounded-full border text-[10px] font-semibold tabular-nums transition-colors",
+                    isCurrent && "border-[color:var(--color-accent)] bg-[color:var(--color-accent)] text-white",
+                    done && !isCurrent && "border-[color:var(--color-success)] bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]",
+                    failed && !isCurrent && "border-[color:var(--color-danger)] bg-[color:var(--color-danger)]/15 text-[color:var(--color-danger)]",
+                    skipped && !isCurrent && "border-[color:var(--color-border)] text-[color:var(--color-fg-muted)] line-through",
+                    !isCurrent && !done && !failed && !skipped && "border-[color:var(--color-border)] text-[color:var(--color-fg-muted)]",
+                  )}
+                  title={`${ACTION_LABEL[s.kind]} · ${chainName(s.chainId)} · ${st}`}
+                >
+                  {done ? <Check size={12} strokeWidth={2.5} /> : i + 1}
+                </span>
+                {i < plan.steps.length - 1 && (
+                  <span
+                    className={cn(
+                      "h-px flex-1",
+                      done ? "bg-[color:var(--color-success)]/45" : "bg-[color:var(--color-border)]",
+                    )}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+        <div className="text-xs text-[color:var(--color-fg-muted)]">
+          Step {cursor + 1} of {plan.steps.length} · {ACTION_LABEL[current.kind]} on {chainName(current.chainId)}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <Pill>{chainName(current.chainId)}</Pill>
           <Pill tone="warn">slippage cap {current.expected.slippagePct.toFixed(2)}%</Pill>
           {current.risks.map((r) => (
@@ -371,19 +422,27 @@ export function SignFlow({ plan, onClose, onComplete }: Props) {
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={onClose}>
+        {cooldown > 0 && (
+          <p className="text-[11px] text-[color:var(--color-fg-muted)]">
+            A short safety pause before your first signature — read the step above
+            while it counts down.
+          </p>
+        )}
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Button variant="ghost" onClick={onClose} className="sm:flex-none">
             Cancel
           </Button>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={skip}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={skip} className="flex-1 sm:flex-none">
               Skip step
             </Button>
-            <Button variant="secondary" onClick={abortRemaining}>
+            <Button variant="secondary" onClick={abortRemaining} className="flex-1 sm:flex-none">
               Stop here
             </Button>
             <Button
               onClick={sign}
+              className="flex-1 sm:flex-none"
               disabled={
                 cooldown > 0 ||
                 currentStatus === "broadcasted" ||
@@ -396,12 +455,18 @@ export function SignFlow({ plan, onClose, onComplete }: Props) {
                   ? "Confirming…"
                   : currentStatus === "confirmed"
                     ? "Confirmed"
-                    : "Sign"}
+                    : !chainOk
+                      ? `Switch to ${chainName(current.chainId)} & sign`
+                      : "Sign"}
             </Button>
           </div>
         </div>
 
-        {allDone && <Button onClick={onComplete}>See portfolio</Button>}
+        {allDone && (
+          <Button onClick={onComplete} className="w-full">
+            See portfolio
+          </Button>
+        )}
       </Card>
     </div>
   );
