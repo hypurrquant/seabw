@@ -3,7 +3,7 @@
 ## Codex Session ID
 `/Users/mousebook/Documents/hypurrquant/seabw/docs/phases/v1.2.1-wallet-siwe-auth`
 
-## 현재 단계: Step 5A 완료 (scope 확장 — AI Tool Loop 추가), Step 5B 최종 게이트 대기
+## 현재 단계: ✅ 완료 (Step 5B Gate 5 통과)
 
 ## Scope 변경 이력
 - **2026-05-20 (1차)**: Wallet SIWE Auth 완료 (✅ 5 step 전부).
@@ -28,7 +28,7 @@
 | 3 | DoD (Tool Loop) | ✅ 완료 | ✅ 통과 | 2026-05-20 |
 | 4 | Tickets (Tool Loop) | ✅ 완료 | ✅ 통과 | 2026-05-20 |
 | 5A | 개발 (Codex 위임) | ✅ 완료 | 구현 완료 | 2026-05-20 |
-| 5B | 최종 게이트 (Codex) | ⏳ 대기 | ⏳ | - |
+| 5B | 최종 게이트 (Codex) | ✅ 완료 | ✅ 통과 (FAIL 2건 해소 후) | 2026-05-20 |
 
 ## 메모
 - 2026-05-20: 1차 SIWE Auth 완료. PROGRESS·CLAUDE.md ✅ 완료 마킹됨.
