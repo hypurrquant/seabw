@@ -1,0 +1,1 @@
+DefiPilot is a TypeScript Next.js 15 app-router project for building guarded DeFi action plans and guiding wallet signing/execution. Core code lives in src/app for routes/pages, src/components for UI, src/policy for guardrails/sanctions/whitelist logic, src/agent for intent/plan composition, and src/lib for utilities/runtime helpers such as rate limiting and plan storage.

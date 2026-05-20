@@ -1,0 +1,15 @@
+node_modules
+.next
+.env.local
+.env*.local
+.DS_Store
+*.log
+dist
+out
+.turbo
+.vercel
+.tsbuildinfo
+next-env.d.ts
+.omc
+
+.claude/scheduled_tasks.lock

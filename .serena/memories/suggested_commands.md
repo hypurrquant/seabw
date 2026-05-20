@@ -1,0 +1,1 @@
+Development commands: `pnpm dev` to run Next.js locally, `pnpm build` for production build, `pnpm start` to serve the production build, `pnpm typecheck` for TypeScript validation, and `pnpm test:guardrails` for the policy test suite.

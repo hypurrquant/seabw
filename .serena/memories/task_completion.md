@@ -1,0 +1,1 @@
+After changes, run `pnpm typecheck`, `pnpm build`, and `pnpm test:guardrails`. For API/runtime changes, confirm dynamic routes still appear in the Next.js build output.

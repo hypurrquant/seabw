@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  /* Comfortable Claude-like palette — warm cream surfaces, singular coral
+     accent at sub-60% saturation, deep warm charcoal for text. Off-black not
+     #000; off-white not #fff. Single accent (skill rule 2). */
+  --color-bg: #faf9f5;
+  --color-panel: #ffffff;
+  --color-panel-2: #f3f1e9;
+  --color-border: #e8e3d4;
+  --color-fg: #2d2a26;
+  --color-fg-muted: #6e6a62;
+  --color-accent: #cc785c;
+  --color-accent-2: #b06149;
+  --color-danger: #c25450;
+  --color-warning: #b67a2a;
+  --color-success: #5a8a5c;
+  --color-conservative: #6b8caf;
+  --color-balanced: #5a8a5c;
+  --color-aggressive: #b67a2a;
+  --color-degen: #c25450;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial;
+  --font-mono: var(--font-geist-mono), ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius-card: 14px;
+  --radius-pill: 9999px;
+}
+
+@layer base {
+  html, body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-display);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  * { box-sizing: border-box; }
+  ::selection { background: rgba(204, 120, 92, 0.22); color: var(--color-fg); }
+  button { cursor: pointer; }
+  input, textarea { font: inherit; color: inherit; }
+}
+
+@layer components {
+  .panel {
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: 0 1px 2px rgba(45, 42, 38, 0.04), 0 8px 24px -16px rgba(45, 42, 38, 0.08);
+  }
+  .panel-2 {
+    background: var(--color-panel-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    color: var(--color-fg-muted);
+    background: rgba(45, 42, 38, 0.03);
+  }
+  .pill-warn { color: #8a5a16; border-color: rgba(182, 122, 42, 0.4); background: rgba(182, 122, 42, 0.1); }
+  .pill-danger { color: #8a322f; border-color: rgba(194, 84, 80, 0.4); background: rgba(194, 84, 80, 0.1); }
+  .pill-ok { color: #356b38; border-color: rgba(90, 138, 92, 0.4); background: rgba(90, 138, 92, 0.1); }
+  .grid-bg {
+    background:
+      radial-gradient(900px 480px at 8% -12%, rgba(204, 120, 92, 0.08), transparent 60%),
+      radial-gradient(800px 420px at 108% 12%, rgba(107, 140, 175, 0.08), transparent 60%),
+      var(--color-bg);
+  }
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  /* Skeleton shimmer — matches surrounding cream surfaces. */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(45, 42, 38, 0.05) 0%,
+      rgba(45, 42, 38, 0.09) 50%,
+      rgba(45, 42, 38, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
+/* React Flow — soft warm tones so the DAG sits naturally on cream. */
+.react-flow__renderer { background: transparent; }
+.react-flow__edge-path { stroke: rgba(110, 106, 98, 0.45); stroke-width: 1.5; }
+.react-flow__edge.animated path { stroke-dasharray: 6 4; }
+.react-flow__handle { background: var(--color-accent); border-color: var(--color-accent); width: 8px; height: 8px; }
+.react-flow__controls { background: var(--color-panel); border: 1px solid var(--color-border); border-radius: 10px; overflow: hidden; }
+.react-flow__controls-button { background: var(--color-panel); border-bottom: 1px solid var(--color-border); color: var(--color-fg); fill: var(--color-fg); }
+.react-flow__controls-button:hover { background: var(--color-panel-2); }
+.react-flow__attribution { background: transparent; color: var(--color-fg-muted); }

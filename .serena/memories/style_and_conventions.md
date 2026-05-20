@@ -1,0 +1,1 @@
+Project uses TypeScript with React/Next.js app-router patterns. Naming is straightforward and descriptive; runtime routes export `POST` handlers and route constants like `runtime`/`dynamic`. Guardrail logic uses explicit rule ids and structured JSON errors. Code style favors double quotes, semicolons, small helpers, and direct zod validation at request boundaries.
