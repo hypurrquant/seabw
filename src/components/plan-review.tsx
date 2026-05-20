@@ -11,9 +11,11 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { Check, Loader2 } from "lucide-react";
 import { Button, Card, Pill } from "@/components/ui";
 import { useApp } from "@/state/app-state";
 import { formatPct, formatUsd, truncateAddress } from "@/lib/utils";
+import { humanizeGuardrail } from "@/lib/guardrail-labels";
 import { PlanNode, type PlanNodeData } from "@/components/dag-node";
 import { SignFlow } from "@/components/sign-flow";
 import type { PipelinePlan } from "@/types";
@@ -158,7 +160,7 @@ export function PlanReview() {
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="panel h-[640px] overflow-hidden">
+        <div className="relative h-[420px] overflow-hidden panel md:h-[640px]">
           <ReactFlowProvider>
             <ReactFlow
               nodes={graph.nodes}
@@ -171,10 +173,19 @@ export function PlanReview() {
               minZoom={0.4}
               maxZoom={1.6}
             >
-              <Background gap={24} color="rgba(79,124,255,0.12)" />
+              <Background gap={24} color="rgba(204,120,92,0.14)" />
               <Controls position="bottom-right" />
             </ReactFlow>
           </ReactFlowProvider>
+          {rehydrating && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[color:var(--color-bg)]/70 backdrop-blur-sm">
+              <Loader2 size={28} strokeWidth={2} className="animate-spin text-[color:var(--color-accent)]" />
+              <div className="text-sm font-medium">Rebinding calldata to your wallet…</div>
+              <div className="max-w-xs text-center text-xs text-[color:var(--color-fg-muted)]">
+                Re-running defi-cli with your address so every recipient is yours, then a fresh precheck.
+              </div>
+            </div>
+          )}
         </div>
 
         <aside className="flex flex-col gap-4">
@@ -195,11 +206,28 @@ export function PlanReview() {
               </div>
             )}
           </Card>
-          <Card title="Applied guardrails" description="Rules the policy engine enforced.">
-            <ul className="grid grid-cols-1 gap-1 text-xs">
-              {plan.guardrails.appliedRules.map((r) => (
-                <li key={r} className="panel-2 px-2 py-1 truncate">{r}</li>
-              ))}
+          <Card title="Applied guardrails" description="Every rule the policy engine enforced on this plan. Hover for what each one means.">
+            <ul className="grid grid-cols-1 gap-1.5 text-xs">
+              {plan.guardrails.appliedRules.map((r) => {
+                const g = humanizeGuardrail(r);
+                return (
+                  <li
+                    key={r}
+                    title={g.detail}
+                    className="group flex cursor-help items-center justify-between gap-2 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-panel-2)] px-2.5 py-1.5"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Check size={12} strokeWidth={2.5} className="flex-none text-[color:var(--color-success)]" />
+                      <span className="text-[color:var(--color-fg)]">{g.label}</span>
+                    </span>
+                    {g.value && (
+                      <span className="flex-none font-mono text-[10px] text-[color:var(--color-fg-muted)]">
+                        {g.value}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </Card>
           {address && (

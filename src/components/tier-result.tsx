@@ -90,6 +90,8 @@ export function TierResultView() {
           </div>
         )}
 
+        <AllocationPreview tier={tier.tier} />
+
         <div className="grid grid-cols-2 gap-3 text-xs">
           <Bound label="Max leverage" value={tier.tier === "degen" ? "3x" : "1x (none)"} />
           <Bound label="Max protocols" value={protoCap(tier.tier)} />
@@ -135,6 +137,63 @@ export function TierResultView() {
     </main>
   );
 }
+
+// Max share of stablecoin capital this tier may move out of stable lending and
+// into LP / volatile positions. The remainder stays in stablecoin lending.
+const LP_CAP_PCT: Record<Tier, number> = {
+  preservation: 0,
+  conservative: 20,
+  balanced: 60,
+  aggressive: 80,
+  degen: 100,
+};
+
+function AllocationPreview({ tier }: { tier: Tier }) {
+  const lpPct = LP_CAP_PCT[tier];
+  const stablePct = 100 - lpPct;
+  return (
+    <div className="panel-2 flex flex-col gap-2 p-4">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-medium">How far your stablecoins can travel</span>
+        <span className="text-[color:var(--color-fg-muted)]">
+          {tier === "degen" ? "up to 100% + leverage" : `up to ${lpPct}% into LP`}
+        </span>
+      </div>
+      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--color-border)]">
+        {stablePct > 0 && (
+          <div
+            className="h-full bg-[color:var(--color-success)]"
+            style={{ width: `${stablePct}%` }}
+          />
+        )}
+        {lpPct > 0 && (
+          <div
+            className={cn("h-full", TIER_BAR[tier])}
+            style={{ width: `${lpPct}%` }}
+          />
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[color:var(--color-fg-muted)]">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-[color:var(--color-success)]" />
+          {stablePct}% stablecoin lending
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className={cn("h-2 w-2 rounded-full", TIER_BAR[tier])} />
+          {tier === "degen" ? "LP / leveraged farming" : `${lpPct}% LP / volatile`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const TIER_BAR: Record<Tier, string> = {
+  preservation: "bg-[color:var(--color-conservative)]",
+  conservative: "bg-[color:var(--color-conservative)]",
+  balanced: "bg-[color:var(--color-balanced)]",
+  aggressive: "bg-[color:var(--color-aggressive)]",
+  degen: "bg-[color:var(--color-degen)]",
+};
 
 function Bound({ label, value }: { label: string; value: string }) {
   return (
