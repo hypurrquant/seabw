@@ -16,3 +16,4 @@ next-env.d.ts
 .omc
 
 .claude/scheduled_tasks.lock
+.codex-discuss-session
