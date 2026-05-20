@@ -143,8 +143,9 @@ export function Marketplace() {
           <Pill>Marketplace · {tier}</Pill>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">Compare yields, build a basket</h1>
           <p className="text-sm text-[color:var(--color-fg-muted)]">
-            Only pools allowed for your tier are listed. APR is estimated, not
-            guaranteed. Pools with wide 7-day variance carry a ribbon badge.
+            Pick where your stablecoins go. Only pools allowed for your tier are
+            listed. APR is estimated, not guaranteed — wide 7-day variance carries
+            a ribbon badge.
           </p>
         </div>
         <div className="flex flex-none items-center gap-2">

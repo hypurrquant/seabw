@@ -8,7 +8,7 @@ dist
 out
 .turbo
 .vercel
-.tsbuildinfo
+*.tsbuildinfo
 next-env.d.ts
 .omc
 

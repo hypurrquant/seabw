@@ -85,8 +85,9 @@ export function Survey() {
           Tell us about your DeFi risk capacity
         </h1>
         <p className="text-sm text-[color:var(--color-fg-muted)]">
-          8 questions plus a vulnerable-consumer self-check, all on one page. Skim,
-          answer in any order — no progress is lost on the way down.
+          This sets how far your stablecoins are allowed to travel — from
+          stable-only lending to leveraged LP. 8 questions plus a
+          vulnerable-consumer self-check, all on one page. Answer in any order.
         </p>
         <div>
           <div className="mb-1 text-xs text-[color:var(--color-fg-muted)]">

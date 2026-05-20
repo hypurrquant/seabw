@@ -99,7 +99,7 @@ export function TierResultView() {
 
         <div className="pt-2 flex flex-col gap-3">
           <div className="text-xs uppercase tracking-wider text-[color:var(--color-fg-muted)]">
-            How would you like to build a plan?
+            How should we deploy your stablecoins?
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <button

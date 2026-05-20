@@ -93,11 +93,11 @@ export function IntentInput() {
     <main className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-3xl flex-col px-6 py-12">
       <Pill>Intent · {tier}</Pill>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-        What do you want to do with your capital?
+        How much stablecoin do you want to put to work?
       </h1>
       <p className="mt-2 text-sm text-[color:var(--color-fg-muted)]">
-        Plain English. We&apos;ll translate it into a plan that fits your tier
-        and runs as a dry-run before you sign anything.
+        Plain English — start from your USDC, USDT, or DAI. We translate it into
+        a tier-compliant plan and run it as a dry-run before you sign anything.
       </p>
       <Card className="mt-6">
         <textarea

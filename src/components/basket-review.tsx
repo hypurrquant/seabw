@@ -118,7 +118,7 @@ export function BasketReview() {
         </Button>
       </header>
 
-      <Card title="Total deposit" description="Sliders cap at this amount. Adjust to resize the basket.">
+      <Card title="Stablecoin to deploy" description="Your USDC / USDT / DAI starting capital. Sliders cap at this amount.">
         <div className="flex items-center gap-3">
           <input
             type="range"
@@ -129,7 +129,7 @@ export function BasketReview() {
             onChange={(e) => dispatch({ type: "SET_TOTAL_DEPOSIT", usd: Number(e.target.value) })}
             className="w-full"
           />
-          <span className="w-28 text-right text-sm">{formatUsd(state.totalDepositUsd)}</span>
+          <span className="w-28 text-right text-sm tabular-nums">{formatUsd(state.totalDepositUsd)}</span>
         </div>
         <div className="flex justify-end">
           <Button size="sm" variant="secondary" onClick={distributeEvenly}>

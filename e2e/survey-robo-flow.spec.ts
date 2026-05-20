@@ -11,7 +11,7 @@ test("Balanced robo flow: survey → AI mode → plan-review with DAG", async ({
   await page.getByRole("button", { name: /AI picks for me/i }).click();
   await connectMockWallet(page);
 
-  await expect(page.getByRole("heading", { name: /What do you want to do/i })).toBeVisible({
+  await expect(page.getByRole("heading", { name: /How much stablecoin do you want to put to work/i })).toBeVisible({
     timeout: 5_000,
   });
   await page.getByPlaceholder(/\$3,000 USDC/).fill("$3000 USDC, want yield");

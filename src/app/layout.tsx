@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DefiPilot — Tell us your DeFi goal. We'll build the plan.",
+  title: "DefiPilot — Put your stablecoins to work.",
   description:
-    "A DeFi robo-advisor. Pick a risk profile, type an intent in plain English, get a simulated multi-step pipeline you sign with your own wallet.",
+    "A stablecoin robo-advisor. Hold USDC, USDT, or DAI? Pick a risk profile, get a tier-compliant DeFi plan — lending, LP, only the swaps it needs — and sign every step from your own wallet.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

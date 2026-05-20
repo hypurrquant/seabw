@@ -22,18 +22,18 @@ export function Landing() {
         <div className="flex flex-col gap-6 pt-6 md:pt-12">
           <Pill className="w-fit">
             <ShieldCheck size={11} strokeWidth={2} className="mr-0.5" />
-            DeFi Robo-Advisor · KOFIA 5-tier · 5 chains
+            Stablecoin robo-advisor · KOFIA 5-tier · 5 chains
           </Pill>
           <h1 className="text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
-            Tell us your DeFi goal.
+            Put your stablecoins to work.
             <span className="block text-[color:var(--color-accent)]">
               We&apos;ll draft the plan.
             </span>
           </h1>
           <p className="max-w-[55ch] text-base leading-relaxed text-[color:var(--color-fg-muted)] md:text-lg">
-            Take a one-page risk survey. Then either type an intent in plain
-            English or browse pools and build a basket. Same guardrails either
-            way — you sign every step from your own wallet.
+            Hold USDC, USDT, or DAI? Tell us your risk profile and how much you
+            want to deploy. We draft a tier-compliant plan — lending, LP, only
+            the swaps the strategy needs — and you sign it from your own wallet.
           </p>
           <div className="mt-2 flex flex-col gap-3">
             <Button
@@ -88,14 +88,14 @@ export function Landing() {
         <ol className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl bg-[color:var(--color-border)] md:grid-cols-[2fr_1.6fr_1.4fr]">
           <Step
             n="01"
-            title="Profile in one page"
-            body="Eight KOFIA-style questions plus a vulnerable-consumer self-check. Cached 24 months so you never repeat it without reason."
+            title="Profile + amount"
+            body="Eight KOFIA-style questions, a vulnerable-consumer check, and how much stablecoin you want to deploy. Cached 24 months."
             icon={<ShieldCheck size={20} strokeWidth={1.75} />}
           />
           <Step
             n="02"
             title="Two ways to plan"
-            body="Type an intent and let it auto-build, or browse pools and assemble a basket — both routes use the same guardrails."
+            body="Type an intent and let it auto-build, or browse pools and assemble a basket — both start from your stables and share the same guardrails."
             icon={<Wand2 size={20} strokeWidth={1.75} />}
           />
           <Step
@@ -116,8 +116,8 @@ export function Landing() {
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl bg-[color:var(--color-border)] md:grid-cols-2">
           <Feature
             icon={<Layers size={18} strokeWidth={1.75} />}
-            title="Tier-bound by design"
-            body="LP-capital caps, single-pool caps, leverage ceilings, audit floors — applied before you see the first APR number."
+            title="Stable-first, tier-bound"
+            body="Low tiers keep your principal in stablecoin lending; higher tiers swap only a capped slice into LP. Caps, leverage ceilings, and audit floors apply before the first APR shows."
           />
           <Feature
             icon={<Network size={18} strokeWidth={1.75} />}
@@ -233,9 +233,14 @@ function PlanPreviewMock() {
         className="pointer-events-none absolute -inset-6 rounded-[28px] bg-[color:var(--color-accent)]/8 blur-2xl"
       />
       <div className="relative">
-        <div className="mb-3 flex items-center gap-2 px-1 text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-fg-muted)]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-success)]" />
-          Live preview · Balanced tier · Base
+        <div className="mb-3 flex items-center justify-between gap-2 px-1 text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-fg-muted)]">
+          <span className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-success)]" />
+            Balanced · Base
+          </span>
+          <span className="font-mono normal-case tracking-normal text-[color:var(--color-fg)]">
+            Start: 3,000 USDC
+          </span>
         </div>
         <div className="panel flex flex-col gap-3 p-4 md:p-5">
           {steps.map((s, i) => (
