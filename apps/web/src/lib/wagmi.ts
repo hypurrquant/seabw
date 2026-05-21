@@ -22,7 +22,7 @@ export const hyperEvm = defineChain({
   },
 });
 
-// v1.3.1: HyperEVM (999) 단일. v1.2.2 prod gate 와 정합.
+// v1.3.1: HyperEVM (999) only. Matches the v1.2.2 prod gate.
 export const SUPPORTED_CHAINS = [
   hyperEvm,
 ] as const satisfies readonly [Chain, ...Chain[]];

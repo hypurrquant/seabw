@@ -128,7 +128,7 @@ export function Chat() {
               onClick={() => void onRequestRecommendations()}
               disabled={!sessionId || busy}
             >
-              🔄 추천 재요청
+              🔄 Re-request
             </Button>
           )}
           <Button variant="ghost" onClick={() => dispatch({ type: "GOTO", stage: "tier-result" })}>
@@ -146,7 +146,7 @@ export function Chat() {
       <div className="mt-4 flex flex-1 flex-col gap-3 overflow-y-auto pb-3">
         {messages.length === 0 && (
           <Card>
-            <p className="text-sm text-[color:var(--color-fg-muted)]">세션을 준비하는 중이에요…</p>
+            <p className="text-sm text-[color:var(--color-fg-muted)]">Preparing session…</p>
           </Card>
         )}
 
@@ -188,7 +188,7 @@ export function Chat() {
             }
           }}
           disabled={busy || !sessionId}
-          placeholder={!sessionId ? "세션 준비 중…" : busy ? "응답 중…" : "메시지를 입력하세요 (Enter)"}
+          placeholder={!sessionId ? "Preparing session…" : busy ? "Thinking…" : "Type a message (Enter)"}
           className="flex-1 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-panel)] px-3 py-2 text-sm outline-none focus:border-[color:var(--color-accent)]"
         />
         <Button onClick={() => void onSend()} disabled={busy || !input.trim() || !sessionId}>

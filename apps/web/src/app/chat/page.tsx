@@ -88,12 +88,12 @@ function ChatRoute() {
             <main className="mx-auto flex h-full w-full max-w-5xl flex-col items-start gap-3 px-6 py-6">
               <Pill>DefiPilot Chat</Pill>
               <Card className="border-[color:var(--color-danger)]/40">
-                <p className="text-sm">지갑 데이터 로드에 실패했어요.</p>
+                <p className="text-sm">Failed to load wallet data.</p>
                 <p className="mt-1 text-xs text-[color:var(--color-fg-muted)]">
                   {prefetch.error}
                 </p>
                 <Button className="mt-3" onClick={prefetch.retry}>
-                  다시 시도
+                  Retry
                 </Button>
               </Card>
             </main>
@@ -103,7 +103,7 @@ function ChatRoute() {
               <Card>
                 <div className="flex items-center gap-3">
                   <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-[color:var(--color-accent)]" />
-                  <p className="text-sm">지갑 분석 중이에요… (잔액 + LP 포지션 로드)</p>
+                  <p className="text-sm">Analyzing wallet… (loading balances + LP positions)</p>
                 </div>
               </Card>
             </main>

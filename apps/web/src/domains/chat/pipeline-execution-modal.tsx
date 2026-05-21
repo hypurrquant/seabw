@@ -140,7 +140,7 @@ export function PipelineExecutionModal({
         <div className="mt-4 space-y-3">
           {phase === "resolving" && (
             <div className="rounded-md border border-[color:var(--color-border)] p-3 text-sm text-[color:var(--color-fg-muted)]">
-              실행 계획을 준비하는 중이에요…
+              Preparing execution plan…
             </div>
           )}
 

@@ -105,7 +105,7 @@ export function TierResultView({ readOnly = false }: { readOnly?: boolean } = {}
               disabled={!state.answers}
               className="self-start"
             >
-              AI와 대화 시작 →
+              Start AI chat →
             </Button>
             <Button variant="ghost" className="self-start" onClick={() => dispatch({ type: "GOTO", stage: "survey" })}>
               ← Retake the survey

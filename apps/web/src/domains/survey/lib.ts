@@ -198,11 +198,11 @@ export const SURVEY_QUESTIONS: SurveyQuestion[] = [
 ];
 
 export const TIER_LABEL: Record<Tier, string> = {
-  preservation: "Preservation (안정형)",
-  conservative: "Conservative (안정추구형)",
-  balanced: "Balanced (위험중립형)",
-  aggressive: "Aggressive (적극투자형)",
-  degen: "Degen (공격투자형)",
+  preservation: "Preservation",
+  conservative: "Conservative",
+  balanced: "Balanced",
+  aggressive: "Aggressive",
+  degen: "Degen",
 };
 
 export const TIER_TAGLINE: Record<Tier, string> = {
