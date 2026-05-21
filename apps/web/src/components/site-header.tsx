@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { LineChart, ShieldAlert } from "lucide-react";
 import { WalletBadge } from "./wallet-badge";
 
-// Global header — brand on the left, secondary nav + wallet badge on the right.
+// Global header — brand on the left, wallet badge on the right.
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-[color:var(--color-border)] bg-[color:var(--color-bg)]/85 backdrop-blur-md">
@@ -16,23 +15,7 @@ export function SiteHeader() {
           </span>
         </Link>
         <nav className="flex items-center gap-1">
-          <Link
-            href="/portfolio"
-            className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-xs text-[color:var(--color-fg-muted)] transition-colors hover:bg-[color:var(--color-panel-2)] hover:text-[color:var(--color-fg)]"
-          >
-            <LineChart size={14} strokeWidth={2} />
-            <span className="hidden sm:inline">Portfolio</span>
-          </Link>
-          <Link
-            href="/risks"
-            className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-xs text-[color:var(--color-fg-muted)] transition-colors hover:bg-[color:var(--color-panel-2)] hover:text-[color:var(--color-fg)]"
-          >
-            <ShieldAlert size={14} strokeWidth={2} />
-            <span className="hidden sm:inline">Risks</span>
-          </Link>
-          <div className="ml-2">
-            <WalletBadge />
-          </div>
+          <WalletBadge />
         </nav>
       </div>
     </header>

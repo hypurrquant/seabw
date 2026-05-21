@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAccount, useDisconnect, useSignMessage } from "wagmi";
 import { useApp } from "@/state/app-state";
 import { getChallenge, verifySignature } from "@/lib/hq-api";
@@ -18,10 +18,27 @@ export function useSiweAuth(): UseSiweAuth {
   const { address, status: accountStatus } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
+  // Stays false until wagmi reports anything other than the initial transient
+  // "disconnected". Without this guard, the brief "disconnected" status on
+  // page reload (before wagmi auto-reconnect kicks in) would fire AUTH_RESET
+  // and wipe the persisted SIWE token from localStorage.
+  const wagmiSettledRef = useRef(false);
 
   // Sync wagmi account → AppState auth
   useEffect(() => {
+    if (
+      accountStatus === "connecting" ||
+      accountStatus === "reconnecting" ||
+      accountStatus === "connected"
+    ) {
+      wagmiSettledRef.current = true;
+    }
+
     if (accountStatus === "disconnected") {
+      if (!wagmiSettledRef.current) {
+        console.info("[siwe] initial transient disconnected — ignored");
+        return;
+      }
       if (state.auth.status !== "idle") {
         console.info("[siwe] wallet disconnected → AUTH_RESET");
         dispatch({ type: "AUTH_RESET" });

@@ -5,17 +5,19 @@ import {
   Dispatch,
   ReactNode,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useRef,
 } from "react";
 import type { Answers, TierResult } from "@/domains/survey/lib";
+import { clearAuth, loadAuth, saveAuth } from "@/lib/auth-storage";
 
 export type Stage =
   | "landing"
   | "connect-wallet"
   | "survey"
-  | "tier-result"
-  | "chat";
+  | "tier-result";
 
 export type AuthStatus =
   | "idle"
@@ -37,6 +39,8 @@ export interface AppState {
   answers?: Answers;
   tier?: TierResult;
   auth: AuthState;
+  /** False until AppStateProvider mounts and the localStorage rehydrate effect runs. */
+  rehydrated: boolean;
   lastError?: string;
 }
 
@@ -55,17 +59,18 @@ type Action =
       expiresAt: number;
     }
   | { type: "AUTH_FAILED"; error: string }
-  | { type: "AUTH_RESET" };
+  | { type: "AUTH_RESET" }
+  | { type: "REHYDRATED" };
 
 const INITIAL: AppState = {
   stage: "landing",
   auth: { status: "idle" },
+  rehydrated: false,
 };
 
 const PROTECTED_STAGES: ReadonlySet<Stage> = new Set([
   "survey",
   "tier-result",
-  "chat",
 ]);
 
 function reducer(state: AppState, action: Action): AppState {
@@ -118,6 +123,8 @@ function reducer(state: AppState, action: Action): AppState {
       };
     case "AUTH_RESET":
       return { ...state, auth: { status: "idle" } };
+    case "REHYDRATED":
+      return { ...state, rehydrated: true };
   }
 }
 
@@ -128,6 +135,51 @@ const Ctx = createContext<{
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, INITIAL);
+  const rehydratedRef = useRef(false);
+
+  // Rehydrate SIWE token from localStorage once on mount.
+  useEffect(() => {
+    if (rehydratedRef.current) return;
+    rehydratedRef.current = true;
+    const stored = loadAuth();
+    if (stored) {
+      console.info("[app-state] rehydrating auth", {
+        address: stored.address,
+        expiresAt: stored.expiresAt,
+      });
+      dispatch({
+        type: "AUTH_VERIFIED",
+        address: stored.address,
+        token: stored.token,
+        expiresAt: stored.expiresAt,
+      });
+    } else {
+      console.info("[app-state] no stored auth");
+    }
+    dispatch({ type: "REHYDRATED" });
+  }, []);
+
+  // Persist on authed, clear on idle/error. Gated on `rehydrated` so the
+  // initial "idle" state never clears storage before rehydrate runs.
+  useEffect(() => {
+    if (!state.rehydrated) return;
+    const auth = state.auth;
+    if (
+      auth.status === "authed" &&
+      auth.ownerAddress &&
+      auth.token &&
+      auth.tokenExpiresAt
+    ) {
+      saveAuth({
+        address: auth.ownerAddress,
+        token: auth.token,
+        expiresAt: auth.tokenExpiresAt,
+      });
+    } else if (auth.status === "idle" || auth.status === "error") {
+      clearAuth();
+    }
+  }, [state.rehydrated, state.auth]);
+
   const value = useMemo(() => ({ state, dispatch }), [state]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

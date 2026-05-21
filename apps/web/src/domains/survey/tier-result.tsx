@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Card, Pill } from "@/components/ui";
 import { useApp } from "@/state/app-state";
 import {
@@ -11,6 +12,7 @@ import {
 } from "./lib";
 import type { Tier } from "./lib";
 import { cn } from "@/lib/utils";
+import { encodeAnswers } from "@/lib/answers-url";
 
 const TIER_COLOR: Record<Tier, string> = {
   preservation: "text-[color:var(--color-conservative)]",
@@ -24,6 +26,7 @@ const PREV_TIER_KEY = "defipilot:prevTier";
 
 export function TierResultView({ readOnly = false }: { readOnly?: boolean } = {}) {
   const { state, dispatch } = useApp();
+  const router = useRouter();
   const tier = state.tier;
   const [upgradedFrom, setUpgradedFrom] = useState<Tier | null>(null);
 
@@ -95,7 +98,11 @@ export function TierResultView({ readOnly = false }: { readOnly?: boolean } = {}
         {!readOnly && (
           <div className="pt-2 flex flex-col gap-3">
             <Button
-              onClick={() => dispatch({ type: "GOTO", stage: "chat" })}
+              onClick={() => {
+                if (!state.answers) return;
+                router.push(`/chat?a=${encodeAnswers(state.answers)}`);
+              }}
+              disabled={!state.answers}
               className="self-start"
             >
               AI와 대화 시작 →

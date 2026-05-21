@@ -96,13 +96,26 @@ export function createHqClient(auth: HqAuth): HqClient {
   }
 
   async function createSession(profile?: InvestorProfile): Promise<string> {
-    const res = await fetch(`${HQ_BASE}/agent/sessions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeader() },
-      body: JSON.stringify({ profile }),
-    });
+    const t0 = performance.now();
+    const url = `${HQ_BASE}/agent/sessions`;
+    console.info("[hq-api] createSession → POST", url);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ profile }),
+      });
+    } catch (err) {
+      console.error("[hq-api] createSession fetch threw", err);
+      throw err;
+    }
+    const dt = Math.round(performance.now() - t0);
+    console.info("[hq-api] createSession ← status", res.status, `${dt}ms`);
     if (res.status === 401) throw new HqUnauthorizedError();
     if (!res.ok) {
+      const body = await res.text().catch(() => "<unreadable>");
+      console.error("[hq-api] createSession non-2xx body", body);
       throw new Error(`HQ createSession failed: ${res.status}`);
     }
     const json = (await res.json()) as { data?: { sessionId?: string } };
