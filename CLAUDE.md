@@ -4,17 +4,19 @@ DefiPilot — KOFIA 기반 설문으로 투자자 성향을 진단하고, Hypurr
 
 ## 현재 페이즈
 
-- **버전**: v1.2.1 (scope 확장 — 2차)
-- **기능**: 1차 Wallet SIWE Auth (✅ 완료) + 2차 **AI Tool Loop** — HQ `@hq/react/agent` 재사용 + 21개 HQ tool 핸들러 이식 + `propose_lp_positions` 신규 + LP 카드 3장 UI + compose_pipeline 흐름 + wagmi 서명
-- **상태**: ✅ 완료 (Step 5A 구현 완료, Step 5B 최종 게이트 대기)
-- **문서**: [docs/phases/v1.2.1-wallet-siwe-auth/](docs/phases/v1.2.1-wallet-siwe-auth/)
-- **Codex Session ID**: `/Users/mousebook/Documents/hypurrquant/seabw/docs/phases/v1.2.1-wallet-siwe-auth`
-- **데모**: 2026-05-21
-- **시작일**: 2026-05-20
-- **완료일**: 2026-05-20
+- **버전**: v1.2.2
+- **기능**: Production readiness — ESLint flat config / playwright cleanup / .env.example 정합 / next.config prod 강제 / `.github/workflows/ci.yml` 신규 / HQ AGENT_AUTH_DEV_BYPASS audit
+- **상태**: ✅ 완료
+- **문서**: [docs/phases/v1.2.2-production-readiness/](docs/phases/v1.2.2-production-readiness/)
+- **시작·완료일**: 2026-05-21
+
+## 예정 / 예약 페이즈
+
+- **v1.3.0** — LP 추천 카드 모달화/후속 정리 phase 후보. 문서는 준비돼 있으나 현재 개발 페이즈는 아님. 현재 동작 중인 LP 카드 3장 + Pipeline Ready + wagmi 실행 경로는 v1.2.1 2차 산출물이다. [문서](docs/phases/v1.3.0-lp-recommendation-cards/)
 
 ## 이전 페이즈
 
+- **v1.2.1** — Wallet SIWE Auth (1차) + AI Tool Loop (2차, 21 HQ tools + `propose_lp_positions` = 총 22개 tool, LP 카드 + Pipeline Ready + compose_pipeline + wagmi 서명). 2026-05-20 완료. [문서](docs/phases/v1.2.1-wallet-siwe-auth/)
 - **v1.2.0** — Chat + Report split-screen (좌: report, 우: AI chat) + HQ `/agent/chat` SSE wiring + investor profile 주입. 2026-05-20 완료. [문서](docs/phases/v1.2.0-chat-and-report-split/)
 - **v1.1.1** — domain-oriented 폴더 리팩토링 (`apps/web/src/{domains,components,lib,state,app}/`). 2026-05-20 완료. [문서](docs/phases/v1.1.1-domain-refactor/)
 - **v1.1.0** — HQ backbone 채택 + apps/server·core 삭제 + seabw 슬림화 + defi-cli 폐기. 2026-05-20 완료. [문서](docs/phases/v1.1.0-hq-backbone/)
@@ -32,11 +34,11 @@ apps/web/src/
 │  ├─ survey/{survey,tier-result,lib}.{tsx,ts}
 │  ├─ wallet/{connect-wallet-panel,connect-wallet-stage,connect-wallet-modal,wallet-modal-context}.tsx
 │  ├─ auth/{use-siwe-auth,hq-client-provider}.{ts,tsx}   # v1.2.1
-│  ├─ chat/{chat,lp-cards,pipeline-ready-card}.tsx  # v1.2.1 AI Tool Loop UI
-│  ├─ agent/{providers,runtime,store,tools}/         # v1.2.1 HQ agent/tool runtime
-│  └─ portfolio/                     # 후속 phase 자리만 확보
-├─ components/{ui,providers,site-header,demo-banner}.tsx   # 공유 UI
-├─ lib/{wagmi,chains,utils}.ts                              # 공유 인프라
+│  ├─ chat/{chat,lp-cards,pipeline-ready-card}.tsx          # v1.2.1 AI Tool Loop UI
+│  ├─ agent/{providers,runtime,store,tools}/                # v1.2.1 HQ agent/tool runtime
+│  └─ portfolio/                                            # 후속 phase 자리만 확보(빈 디렉토리)
+├─ components/{ui,providers,site-header,demo-banner,wallet-badge}.tsx
+├─ lib/{wagmi,chains,hq-api,tendency-prompt,utils}.ts
 └─ state/app-state.tsx
 src/                                  # 휴면(보존) — phase 시작 시점 그대로
 docs/phases/
@@ -46,10 +48,12 @@ docs/phases/
   v1.1.1-domain-refactor/       # 완료 — domain-oriented 폴더로 재배치
   v1.2.0-chat-and-report-split/ # 완료 — split-screen + HQ chat
   v1.2.1-wallet-siwe-auth/      # 완료 — SIWE + AI Tool Loop
+  v1.2.2-production-readiness/   # 완료 — lint/build/env/CI/prod gate 정리
+  v1.3.0-lp-recommendation-cards/ # 예약 — 후속 모달화/정리 phase 문서
 ```
 
-v1.1.0에서 `apps/server`, `apps/core`는 통째로 제거됐고 모든 책임은 외부 HypurrQuant apps/server가 가져간다.
-seabw web은 survey + tendency 변환 + HQ chat 호출 + wagmi 서명만 담당.
+v1.1.0에서 seabw 내부 `apps/server`, `apps/core`는 제거됐다. HQ backend 책임은 외부 HypurrQuant apps/server가 맡는다.
+다만 v1.2.1 2차부터 seabw web은 HQ `@hq/core`, `@hq/react` workspace package를 사용하고, HQ browser tool handler 일부를 `apps/web/src/domains/agent/tools/`로 이식해 브라우저 tool loop를 직접 실행한다. 즉 seabw web 책임은 survey + tendency 변환 + HQ chat 호출 + browser tool execution + LP 카드/파이프라인 preview + wagmi 서명 UI까지다.
 
 ## 부팅
 
@@ -72,17 +76,19 @@ docker compose -f docker-compose.local.yml up -d --build api
 ```
 
 `apps/web/.env.local` 의 `NEXT_PUBLIC_HQ_ORIGIN=http://localhost:3003` 와 `NEXT_PUBLIC_HQ_BASE_URL=http://localhost:3003/api/v1` 사용.
+전체 env 예시는 repo root `.env.example`, 앱 로컬 최소 예시는 `apps/web/.env.local.example` 을 기준으로 한다.
 
 ## Codex (acpx) 사전 조건
 
 HQ apps/server의 `/agent/chat` SSE 는 `acpx` + `codex-acp` 가 HQ 측 PATH 에 있어야 동작.
 seabw web은 HQ에 HTTP/SSE로만 의존하므로 seabw 측에서는 codex 직접 호출 없음.
 
-## 해커톤 운영 정책
+## 운영 정책
 
-- **이번 해커톤은 전부 로컬 실행 기준**으로 진행한다. 배포/CI/도커는 scope 외.
-- seabw web + HQ apps/server를 같은 머신에서 dev 모드로 띄워 사용한다.
-- env, 포트, 의존성 가정은 전부 "로컬 dev" 전제. 운영 보안/스케일 항목은 의도적 미적용.
+- 기본 시연/개발은 로컬 실행 기준이다. seabw web + HQ apps/server를 같은 머신에서 dev 모드로 띄워 사용한다.
+- v1.2.2부터 CI와 prod build guard는 존재한다. `.github/workflows/ci.yml` 은 HQ worktree를 runner의 상대 경로에 clone한 뒤 install/typecheck/lint/test/build를 수행한다.
+- prod build는 `apps/web/next.config.ts` 에서 `NEXT_PUBLIC_DEFIPILOT_ENV=prod`, `DEFIPILOT_ENV=prod`, `DEFIPILOT_DEMO_BANNER=false`, `NEXT_PUBLIC_DEFAULT_CHAIN_ID=999`, `HYPEREVM_RPC_URL` 를 강제한다.
+- 운영 보안/스케일(CSP, Sentry, rate limit, e2e suite 복원)은 아직 별도 phase 대상이다.
 
 ## HypurrQuant_FE (HQ) 패치 — 전용 worktree
 
@@ -97,6 +103,7 @@ HQ는 별 프로젝트이며 다른 작업이 동시에 진행 중이라, seabw 
 
 ```bash
 pnpm typecheck               # apps/web strict tsc
+pnpm lint                    # eslint flat config
 pnpm build                   # next build
 pnpm test                    # vitest
 ```

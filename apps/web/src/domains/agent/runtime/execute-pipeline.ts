@@ -1,5 +1,7 @@
 import { executeRecipe } from "@hq/react/defi/pipeline";
 import { usePipelineStore } from "@hq/react/agent";
+import { getAccount, switchChain } from "wagmi/actions";
+import { getWagmiConfig, hyperEvm } from "@/lib/wagmi";
 
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -13,6 +15,20 @@ export async function executePendingPipeline(
   const store = usePipelineStore.getState();
   const entry = store.pipelines[pipelineId];
   if (!entry) throw new Error(`pipeline ${pipelineId} not found`);
+
+  // Ensure wallet is on HyperEVM (999) before any tx. Otherwise viem throws
+  // `chain mismatch` and the recipe stalls.
+  const config = getWagmiConfig();
+  const account = getAccount(config);
+  if (account.chainId !== hyperEvm.id) {
+    try {
+      await switchChain(config, { chainId: hyperEvm.id });
+    } catch (err) {
+      const msg = toErrorMessage(err);
+      store.markFailed(sessionId, pipelineId, `Chain switch rejected: ${msg}`);
+      throw err;
+    }
+  }
 
   store.markExecuting(sessionId, pipelineId);
 

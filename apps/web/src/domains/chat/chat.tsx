@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useAgentChat, useAgentStore } from "@hq/react/agent";
 import { Button, Card, Pill } from "@/components/ui";
 import { useApp } from "@/state/app-state";
@@ -8,8 +10,8 @@ import { buildTendencyPrompt } from "@/lib/tendency-prompt";
 import { useHqClient } from "@/domains/auth/hq-client-provider";
 import { useWalletModal } from "@/domains/wallet/wallet-modal-context";
 import { LpCards } from "./lp-cards";
-import { PipelineReadyCard } from "./pipeline-ready-card";
-import { selectLpCard } from "@/domains/agent/runtime/select-lp-card";
+import { PipelineExecutionModal } from "./pipeline-execution-modal";
+import { useLpExecutionModal } from "./use-lp-execution-modal";
 import type { LpCard } from "@/domains/agent/tools/propose-lp-positions";
 
 export function Chat() {
@@ -17,10 +19,10 @@ export function Chat() {
   const hq = useHqClient();
   const walletModal = useWalletModal();
   const chat = useAgentChat();
+  const openExecutionModal = useLpExecutionModal((s) => s.open);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [localPipelineIds, setLocalPipelineIds] = useState<string[]>([]);
   const initRef = useRef(false);
 
   const messages = useAgentStore(
@@ -62,26 +64,36 @@ export function Chat() {
 
   useEffect(() => {
     if (initRef.current) return;
-    if (state.auth.status !== "authed") return;
-    if (!state.answers || !state.tier) return;
+    if (state.auth.status !== "authed") {
+      console.info("[chat] waiting for auth", { status: state.auth.status });
+      return;
+    }
+    if (!state.answers || !state.tier) {
+      console.info("[chat] waiting for answers/tier", {
+        hasAnswers: !!state.answers,
+        hasTier: !!state.tier,
+      });
+      return;
+    }
     initRef.current = true;
+    console.info("[chat] creating HQ session", { tier: state.tier.tier });
 
-    let cancelled = false;
-    (async () => {
+    // No `cancelled` guard — Strict Mode tears the effect down then re-runs.
+    // initRef prevents duplicate fires, and setState on unmounted is a silent
+    // no-op in React 18+.
+    void (async () => {
       try {
         const sid = await hq.createSession({ answers: state.answers!, tier: state.tier! });
-        if (cancelled) return;
+        console.info("[chat] session ok", { sessionId: sid });
         setSessionId(sid);
         const first = buildTendencyPrompt(state.answers!, state.tier!);
+        console.info("[chat] sending tendency prompt", { len: first.length });
         await sendToAgent(first, sid);
       } catch (err) {
+        console.error("[chat] session/send failure", err);
         handleAuthError(err);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [handleAuthError, hq, sendToAgent, state.answers, state.auth.status, state.tier]);
 
   async function onSend() {
@@ -91,14 +103,12 @@ export function Chat() {
     await sendToAgent(text, sessionId);
   }
 
-  async function onSelectLpCard(card: LpCard) {
-    if (!sessionId || !ownerAddress) return;
-    try {
-      const pipelineId = await selectLpCard(card, { ownerAddress, sessionId });
-      setLocalPipelineIds((prev) => (prev.includes(pipelineId) ? prev : [...prev, pipelineId]));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+  function onSelectLpCard(card: LpCard) {
+    if (!sessionId || !ownerAddress) {
+      setError("Wallet/session not ready");
+      return;
     }
+    openExecutionModal(card);
   }
 
   async function onRequestRecommendations() {
@@ -152,25 +162,20 @@ export function Chat() {
             <div className="text-[10px] uppercase tracking-wider text-[color:var(--color-fg-muted)]">
               {message.role}
             </div>
-            <p className="mt-1 whitespace-pre-wrap text-sm">
-              {message.content || (busy && message.id === messages[messages.length - 1]?.id ? "…" : "")}
-            </p>
+            <div className="prose prose-sm prose-invert mt-1 max-w-none text-sm [&_*]:my-1 [&_code]:rounded [&_code]:bg-[color:var(--color-panel-2)] [&_code]:px-1 [&_code]:py-0.5 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-[color:var(--color-panel-2)] [&_pre]:p-2 [&_a]:text-[color:var(--color-accent)] [&_a]:underline [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5">
+              {message.content ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+              ) : busy && message.id === messages[messages.length - 1]?.id ? (
+                "…"
+              ) : null}
+            </div>
           </Card>
         ))}
 
-        <LpCards onSelect={(card) => void onSelectLpCard(card)} />
-
-        {sessionId &&
-          ownerAddress &&
-          localPipelineIds.map((pipelineId) => (
-            <PipelineReadyCard
-              key={pipelineId}
-              pipelineId={pipelineId}
-              sessionId={sessionId}
-              ownerAddress={ownerAddress}
-            />
-          ))}
+        <LpCards onSelect={onSelectLpCard} />
       </div>
+
+      <PipelineExecutionModal sessionId={sessionId} ownerAddress={ownerAddress} />
 
       <div className="flex gap-2 border-t border-[color:var(--color-border)] pt-3">
         <input

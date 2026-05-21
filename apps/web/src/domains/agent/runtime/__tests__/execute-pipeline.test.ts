@@ -9,6 +9,16 @@ vi.mock("@hq/react/defi/pipeline", () => ({
   executeRecipe: vi.fn(),
 }));
 
+vi.mock("wagmi/actions", () => ({
+  getAccount: () => ({ chainId: 999 }),
+  switchChain: vi.fn(async () => undefined),
+}));
+
+vi.mock("@/lib/wagmi", () => ({
+  getWagmiConfig: () => ({}),
+  hyperEvm: { id: 999 },
+}));
+
 const pipelineId = "pipeline-1";
 const sessionId = "session-1";
 const ownerAddress = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";

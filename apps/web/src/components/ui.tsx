@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonHTMLAttributes, forwardRef, HTMLAttributes, ReactNode } from "react";
+import { ButtonHTMLAttributes, forwardRef, HTMLAttributes, ReactNode, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -126,6 +126,51 @@ export function ProgressBar({ value, max = 100 }: { value: number; max?: number 
         className="h-full bg-[color:var(--color-accent)] transition-all"
         style={{ width: `${pct}%` }}
       />
+    </div>
+  );
+}
+
+const MODAL_SIZE: Record<"sm" | "md" | "lg", string> = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-2xl",
+};
+
+export function ModalContainer({
+  isOpen,
+  onClose,
+  closeOnBackdrop = true,
+  size = "md",
+  children,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  closeOnBackdrop?: boolean;
+  size?: "sm" | "md" | "lg";
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    if (!isOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && closeOnBackdrop) onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, closeOnBackdrop, onClose]);
+
+  if (!isOpen) return null;
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && closeOnBackdrop) onClose();
+      }}
+    >
+      <div className={cn("w-full p-4", MODAL_SIZE[size])}>
+        <div className="panel rounded-xl">{children}</div>
+      </div>
     </div>
   );
 }
