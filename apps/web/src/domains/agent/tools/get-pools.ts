@@ -51,10 +51,13 @@ export async function getPoolsHandler(args: Record<string, unknown>): Promise<To
   const { pools } = usePoolStore.getState();
 
   // 2. PoolQuery 조립
+  //    [seabw] chainId 누락 시 999 (HyperEVM) 강제 — seabw 는 단일 체인 운영이라
+  //    AI 가 다른 체인 풀 (Base/BSC/Ethereum) 까지 보면 안 됨.
+  const requestedChainId = args['chainId'] != null ? Number(args['chainId']) : 999;
   const query: PoolQuery = {
     search: typeof args['search'] === 'string' ? args['search'] : null,
     token: typeof args['token'] === 'string' ? args['token'] : null,
-    chains: args['chainId'] ? [Number(args['chainId'])] : [],
+    chains: [requestedChainId],
     dexes: args['dex'] ? [String(args['dex'])] : [],
     tvl: { min: args['minTvl'] ? Number(args['minTvl']) : null, max: null },
     apr: { min: args['minApr'] ? Number(args['minApr']) : null, max: null },

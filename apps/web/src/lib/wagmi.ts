@@ -1,6 +1,5 @@
 import { defineChain, type Chain } from "viem";
 import { createConfig, http } from "wagmi";
-import { base, baseSepolia } from "wagmi/chains";
 import { injected, mock, walletConnect } from "wagmi/connectors";
 import type { Config } from "wagmi";
 import { CHAINS, rpcFor } from "@/lib/chains";
@@ -23,10 +22,9 @@ export const hyperEvm = defineChain({
   },
 });
 
+// v1.3.1: HyperEVM (999) 단일. v1.2.2 prod gate 와 정합.
 export const SUPPORTED_CHAINS = [
   hyperEvm,
-  base,
-  baseSepolia,
 ] as const satisfies readonly [Chain, ...Chain[]];
 
 let cached: Config | null = null;
@@ -52,8 +50,6 @@ export function getWagmiConfig(): Config {
     multiInjectedProviderDiscovery: !e2eMode,
     transports: {
       [hyperEvm.id]: http(rpcFor(hyperEvm.id)),
-      [base.id]: http(rpcFor(base.id)),
-      [baseSepolia.id]: http(rpcFor(baseSepolia.id)),
     },
     connectors: e2eMode
       ? [mock({ accounts: [E2E_ACCOUNT], features: { reconnect: true } })]

@@ -37,8 +37,22 @@ export const LpCardSchema = z.object({
   }),
   position: z.object({
     suggestedAmountUsd: z.number().positive(),
-    priceRange: z.object({ lower: z.number(), upper: z.number(), unit: z.enum(["price", "tick"]) }).optional(),
-    tokenSplit: z.object({ base: z.number().min(0).max(1), quote: z.number().min(0).max(1) }).optional(),
+    // priceRange / tokenSplit 는 UI 표시용 — recipe 의 tickLower/tickUpper 와
+    // amount0/amount1 이 source of truth. AI 가 누락해도 zod 통과시킴 (UI 가 알아서
+    // recipe 에서 추론하거나 "—" 로 표시).
+    priceRange: z
+      .object({
+        lower: z.number(),
+        upper: z.number(),
+        unit: z.enum(["price", "tick"]),
+      })
+      .optional(),
+    tokenSplit: z
+      .object({
+        base: z.number().min(0).max(1),
+        quote: z.number().min(0).max(1),
+      })
+      .optional(),
   }),
   reasoning: z.object({
     fitForTier: z.string().min(1),
@@ -46,12 +60,51 @@ export const LpCardSchema = z.object({
     cons: z.array(z.string()).max(3),
     tierAlignment: z.enum(["match", "stretch", "warning"]),
   }),
-  recipe: z.array(z.object({ atom: z.string(), params: z.unknown() })).min(1),
+  recipe: z
+    .array(
+      z.object({
+        atom: z.string().min(1),
+        // AI 가 가끔 params 를 JSON string 으로 보냄 — preprocess 로 parse 시도.
+        params: z.preprocess((v) => {
+          if (typeof v === "string") {
+            try { return JSON.parse(v); } catch { return v; }
+          }
+          return v;
+        }, z.record(z.unknown()).refine(
+          (p) => Object.keys(p).length > 0,
+          { message: "recipe[].params must be a non-empty object" },
+        )),
+      }),
+    )
+    .min(1)
+    .refine(
+      (recipe) =>
+        recipe.some((atom) => {
+          if (atom.atom !== "mint") return false;
+          const p = atom.params as Record<string, unknown>;
+          const tl = p.tickLower;
+          const tu = p.tickUpper;
+          // 서버 스키마: token0Amount / token1Amount (NOT amount0/amount1).
+          // BigIntLikeSchema 가 string|number 둘 다 허용 → 여기서도 둘 다 받음.
+          const a0 = p.token0Amount;
+          const a1 = p.token1Amount;
+          const isNumLike = (v: unknown) =>
+            typeof v === "string" ? /^-?\d+$/.test(v) : typeof v === "number" && Number.isFinite(v);
+          if (typeof tl !== "number" || typeof tu !== "number" || tl >= tu) return false;
+          if (!isNumLike(a0) || !isNumLike(a1)) return false;
+          const both0 = String(a0) === "0" && String(a1) === "0";
+          return !both0;
+        }),
+      {
+        message:
+          "recipe must contain at least one 'mint' atom with integer tickLower<tickUpper and non-zero token0Amount/token1Amount (decimal string or integer)",
+      },
+    ),
   estimatedGasUsd: z.number().optional(),
 });
 
 export const LpProposalSchema = z.object({
-  cards: z.tuple([LpCardSchema, LpCardSchema, LpCardSchema]),
+  cards: z.array(LpCardSchema).length(3),
   rationale: z.string().min(1),
   generatedAt: z.string().datetime().optional(),
 });

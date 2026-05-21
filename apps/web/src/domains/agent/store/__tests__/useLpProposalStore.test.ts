@@ -15,7 +15,7 @@ const proposal: LpProposal = {
       },
       poolAddress: "0x3333333333333333333333333333333333333333",
       metrics: { apr: 12, tvlUsd: 1_000_000, ilRisk: "low" },
-      position: { suggestedAmountUsd: 100 },
+      position: { suggestedAmountUsd: 100, priceRange: { lower: -1200, upper: 1200, unit: "tick" }, tokenSplit: { base: 0.5, quote: 0.5 } },
       reasoning: {
         fitForTier: "Matches tier",
         pros: ["Low IL"],
@@ -35,7 +35,7 @@ const proposal: LpProposal = {
       },
       poolAddress: "0x4444444444444444444444444444444444444444",
       metrics: { apr: 16, tvlUsd: 750_000, ilRisk: "medium" },
-      position: { suggestedAmountUsd: 100 },
+      position: { suggestedAmountUsd: 100, priceRange: { lower: -1200, upper: 1200, unit: "tick" }, tokenSplit: { base: 0.5, quote: 0.5 } },
       reasoning: {
         fitForTier: "Balanced stretch",
         pros: ["Higher APR"],
@@ -55,7 +55,7 @@ const proposal: LpProposal = {
       },
       poolAddress: "0x5555555555555555555555555555555555555555",
       metrics: { apr: 24, tvlUsd: 300_000, ilRisk: "high" },
-      position: { suggestedAmountUsd: 75 },
+      position: { suggestedAmountUsd: 75, priceRange: { lower: -1200, upper: 1200, unit: "tick" }, tokenSplit: { base: 0.5, quote: 0.5 } },
       reasoning: {
         fitForTier: "Opportunistic option",
         pros: ["Highest APR"],

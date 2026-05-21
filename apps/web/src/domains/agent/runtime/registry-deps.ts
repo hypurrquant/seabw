@@ -1,5 +1,7 @@
 import { createPublicClient, http } from "viem";
 import { getAccount } from "wagmi/actions";
+import { useTokenBalanceStore } from "@hq/react/balance";
+import { refreshTokenBalances } from "@hq/react/balance";
 import { getWagmiConfig, SUPPORTED_CHAINS } from "@/lib/wagmi";
 import type { RegistryDeps } from "../tools";
 
@@ -7,14 +9,20 @@ const SUPPORTED_CHAIN_MAP = Object.fromEntries(
   SUPPORTED_CHAINS.map((chain) => [chain.id, chain]),
 );
 
-function createEphemeralBalanceStore(): RegistryDeps["balanceStore"] {
-  const cache: Record<string, Record<string, Record<string, bigint>>> = {};
+// Bridge HQ's real `useTokenBalanceStore` into RegistryDeps shape. Without
+// this, AI tool handlers (get_enriched_balances etc.) read from an empty
+// ephemeral stub even though prefetch/refreshAll has populated the real store.
+function createHqBalanceStore(): RegistryDeps["balanceStore"] {
   return {
-    getState: () => ({
-      cache,
-      refresh: async () => undefined,
-      getBalance: () => 0n,
-    }),
+    getState: () => {
+      const s = useTokenBalanceStore.getState();
+      return {
+        cache: s.cache,
+        refresh: (owner, chainId, tokens) =>
+          refreshTokenBalances(owner, chainId, tokens),
+        getBalance: (owner, chainId, token) => s.getBalance(owner, chainId, token),
+      };
+    },
   };
 }
 
@@ -41,7 +49,7 @@ export function buildRegistryDeps(getAuthToken: () => string): RegistryDeps {
         ready: account.status === "connected",
       };
     },
-    balanceStore: createEphemeralBalanceStore(),
+    balanceStore: createHqBalanceStore(),
     getRelaySignDeps: () => null,
     getAuthToken,
   };

@@ -88,10 +88,26 @@ export class ServerProxyProvider implements AIProvider {
                 args: parsed.args ?? {},
               };
 
+              console.info(`%c[sse] ◀ tool_call ${call.name}`, "color:#58a6ff", {
+                toolCallId: call.toolCallId,
+                args: call.args,
+              });
+
               yield { type: 'tool_call', ...call };
 
               // Browser가 tool 실행
               const result = await params.onToolCall(call);
+
+              console.info(`%c[sse] ▶ tool_result ${call.name}`, "color:#d2a8ff", {
+                toolCallId: call.toolCallId,
+                status: result.status,
+                code: (result as { code?: string }).code,
+                message: (result as { message?: string }).message,
+                preview:
+                  result.status === "success" && "data" in result
+                    ? JSON.stringify(result.data).slice(0, 200)
+                    : undefined,
+              });
 
               // 결과를 서버에 전송 (sessionId + toolCallId 복합키)
               await http<ApiResponse<{ readonly received: boolean }>>(`${this.baseUrl}/agent/tool-result`, {

@@ -21,7 +21,7 @@ function makeCard(overrides: Partial<LpCard> = {}): LpCard {
     },
     poolAddress: "0x3333333333333333333333333333333333333333",
     metrics: { apr: 10, tvlUsd: 1_000_000, ilRisk: "low" },
-    position: { suggestedAmountUsd: 100 },
+    position: { suggestedAmountUsd: 100, priceRange: { lower: -1200, upper: 1200, unit: "tick" }, tokenSplit: { base: 0.5, quote: 0.5 } },
     reasoning: {
       fitForTier: "Matches tier",
       pros: ["Low IL"],

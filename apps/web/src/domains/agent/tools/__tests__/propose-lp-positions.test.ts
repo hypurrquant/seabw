@@ -32,6 +32,8 @@ function makeCard(rank: 1 | 2 | 3): LpCard {
     },
     position: {
       suggestedAmountUsd: 100,
+      priceRange: { lower: -1200, upper: 1200, unit: "tick" },
+      tokenSplit: { base: 0.5, quote: 0.5 },
     },
     reasoning: {
       fitForTier: "Matches balanced tier",
@@ -39,7 +41,19 @@ function makeCard(rank: 1 | 2 | 3): LpCard {
       cons: ["Smart contract risk"],
       tierAlignment: "match",
     },
-    recipe: [{ atom: "mint", params: { chainId: 999 } }],
+    recipe: [
+      {
+        atom: "mint",
+        params: {
+          chainId: 999,
+          poolAddress: "0x3333333333333333333333333333333333333333",
+          tickLower: -1200,
+          tickUpper: 1200,
+          token0Amount: "50000000",
+          token1Amount: "12000000000000000",
+        },
+      },
+    ],
   };
 }
 

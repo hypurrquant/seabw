@@ -5,6 +5,8 @@ import { setHttpBaseUrl } from "@hq/core/lib/http";
 import type { ExecutionRequest } from "@hq/core/lib/types";
 import type { PlatformExecuteResult } from "@hq/core/defi/pipeline/types";
 import { initPlatformDeps } from "@hq/react/platform";
+import { hydrateTokenConfig } from "@hq/react/token";
+import { hydratePoolConfig } from "@hq/react/defi/lp/pool";
 import { sendTransaction, signMessage as signMessageAction } from "wagmi/actions";
 import { getWagmiConfig } from "@/lib/wagmi";
 
@@ -49,6 +51,15 @@ export function HqBootProvider({ children }: { children: ReactNode }) {
       },
       getSignDeps: () => null,
     });
+
+    // Hydrate token + pool config in parallel. Without these, useTokenConfigStore
+    // and usePoolConfigStore stay empty; every balance/pool scan returns 0.
+    void hydrateTokenConfig()
+      .then(() => console.info("[hq-boot] token config hydrated"))
+      .catch((err) => console.warn("[hq-boot] hydrateTokenConfig failed", err));
+    void hydratePoolConfig()
+      .then(() => console.info("[hq-boot] pool config hydrated"))
+      .catch((err) => console.warn("[hq-boot] hydratePoolConfig failed", err));
   }, []);
 
   return <>{children}</>;
