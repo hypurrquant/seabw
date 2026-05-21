@@ -6,6 +6,22 @@ import { useTokenBalanceStore, getBalanceSlice } from "@hq/react/balance";
 import { getWagmiConfig } from "@/lib/wagmi";
 
 /**
+ * Returns raw on-chain token balance (wei) for the connected wallet on
+ * `chainId`. Returns null when wallet not connected or token config not yet
+ * hydrated — callers should treat null as "skip validation".
+ */
+export function getTokenRawBalance(
+  chainId: number,
+  tokenAddress: string,
+): bigint | null {
+  const account = getAccount(getWagmiConfig());
+  if (!account.address) return null;
+  const cache = useTokenBalanceStore.getState().cache;
+  const slice = getBalanceSlice(cache, account.address, chainId);
+  return slice[tokenAddress.toLowerCase()] ?? 0n;
+}
+
+/**
  * Returns sum of (token0 valueUsd + token1 valueUsd) currently held by the
  * connected wallet on `chainId`. Returns null when wallet is not connected or
  * token config/price stores haven't hydrated yet — callers should treat null

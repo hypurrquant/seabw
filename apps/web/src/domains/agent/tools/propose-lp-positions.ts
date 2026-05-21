@@ -92,12 +92,17 @@ export const LpCardSchema = z.object({
             typeof v === "string" ? /^-?\d+$/.test(v) : typeof v === "number" && Number.isFinite(v);
           if (typeof tl !== "number" || typeof tu !== "number" || tl >= tu) return false;
           if (!isNumLike(a0) || !isNumLike(a1)) return false;
-          const both0 = String(a0) === "0" && String(a1) === "0";
-          return !both0;
+          // Both sides must be strictly positive. Single-sided mint (one side = 0)
+          // breaks build-step when current tick drifts into the proposed range
+          // between resolve and build-step: server rejects with
+          // "Single-sided tokenX input is no longer valid".
+          const a0Zero = String(a0) === "0";
+          const a1Zero = String(a1) === "0";
+          return !a0Zero && !a1Zero;
         }),
       {
         message:
-          "recipe must contain at least one 'mint' atom with integer tickLower<tickUpper and non-zero token0Amount/token1Amount (decimal string or integer)",
+          "recipe must contain at least one 'mint' atom with integer tickLower<tickUpper and BOTH token0Amount AND token1Amount > 0 (no single-sided mint — tick drift between resolve and build-step breaks one-sided positions)",
       },
     ),
   estimatedGasUsd: z.number().optional(),
@@ -122,6 +127,9 @@ type Deps = {
     token0Address: string,
     token1Address: string,
   ) => number | null;
+  /** Returns raw on-chain token balance (wei) for the user on `chainId`.
+   *  Return null when not hydrated → handler skips this validation. */
+  getTokenRawBalance?: (chainId: number, tokenAddress: string) => bigint | null;
 };
 
 export function createProposeLpPositionsHandler(deps: Deps) {
@@ -161,6 +169,36 @@ export function createProposeLpPositionsHandler(deps: Deps) {
           status: "error",
           code: "INVALID_ARGS",
           message: `LpProposal rejected — suggestedAmountUsd exceeds user's actual token holdings for the pair. Call get_enriched_balances({chainId: 999}) first, then lower each card's suggestedAmountUsd to fit within (token0 valueUsd + token1 valueUsd). Do not invent default amounts. Issues: ${issues.join("; ")}`,
+        };
+      }
+    }
+
+    // Pair coverage guard: mint reverts with "STF" (safeTransferFrom failed) if
+    // user holds zero of one side. P0 server does not allow `swap` atom in
+    // recipes, so the only valid choice is a pair where the user holds BOTH
+    // tokens with raw balance > 0.
+    if (deps.getTokenRawBalance) {
+      const issues: string[] = [];
+      for (const card of parsed.data.cards) {
+        const baseBal = deps.getTokenRawBalance(card.chainId, card.pair.base.address);
+        const quoteBal = deps.getTokenRawBalance(card.chainId, card.pair.quote.address);
+        if (baseBal == null || quoteBal == null) continue;
+        if (baseBal === 0n) {
+          issues.push(
+            `card #${card.rank} ${card.pair.base.symbol}/${card.pair.quote.symbol}: user holds 0 ${card.pair.base.symbol}`,
+          );
+        }
+        if (quoteBal === 0n) {
+          issues.push(
+            `card #${card.rank} ${card.pair.base.symbol}/${card.pair.quote.symbol}: user holds 0 ${card.pair.quote.symbol}`,
+          );
+        }
+      }
+      if (issues.length > 0) {
+        return {
+          status: "error",
+          code: "INVALID_ARGS",
+          message: `LpProposal rejected — pair coverage mismatch. Mint will revert with STF (safeTransferFrom failed) when user holds zero of one side. The 'swap' atom is NOT allowed in P0. Pick a pair where user holds BOTH tokens with raw balance > 0. Issues: ${issues.join("; ")}`,
         };
       }
     }

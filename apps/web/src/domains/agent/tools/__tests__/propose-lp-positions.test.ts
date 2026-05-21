@@ -157,6 +157,78 @@ describe("createProposeLpPositionsHandler", () => {
     expect(pushProposal).toHaveBeenCalledTimes(1);
   });
 
+  it("rejects proposal when user holds 0 of one pair side and recipe has no swap atom", async () => {
+    const handler = createProposeLpPositionsHandler({
+      pushProposal: vi.fn(),
+      // USDC balance = 0, HYPE balance > 0
+      getTokenRawBalance: (_chainId, addr) =>
+        addr.toLowerCase() === BASE_TOKEN.address.toLowerCase() ? 0n : 1_000_000n,
+    });
+
+    const result = await handler(makeProposal());
+
+    expect(result.status).toBe("error");
+    if (result.status !== "error") throw new Error("expected error result");
+    expect(result).toMatchObject({ code: "INVALID_ARGS" });
+    expect(result.message).toContain("STF");
+    expect(result.message).toContain("swap");
+  });
+
+  it("rejects regardless of swap atom — P0 disallows swap, must hold BOTH sides", async () => {
+    const handler = createProposeLpPositionsHandler({
+      pushProposal: vi.fn(),
+      getTokenRawBalance: (_chainId, addr) =>
+        addr.toLowerCase() === BASE_TOKEN.address.toLowerCase() ? 0n : 1_000_000n,
+    });
+    const proposal = makeProposal();
+    // Even with a swap atom present, handler still rejects because P0 server
+    // does not allow swap atoms in recipes.
+    for (const card of proposal.cards) {
+      card.recipe = [
+        {
+          atom: "swap",
+          params: { chainId: 999, tokenIn: QUOTE_TOKEN.address, tokenOut: BASE_TOKEN.address, amountIn: "100" },
+        },
+        ...card.recipe,
+      ];
+    }
+
+    const result = await handler(proposal);
+
+    expect(result.status).toBe("error");
+    if (result.status !== "error") throw new Error("expected error result");
+    expect(result.message).toContain("STF");
+  });
+
+  it("returns INVALID_ARGS when mint atom has single-sided amount (token0=0 or token1=0)", async () => {
+    const handler = createProposeLpPositionsHandler({ pushProposal: vi.fn() });
+    const proposal = makeProposal();
+    // Force single-sided: token1 only.
+    proposal.cards[0] = {
+      ...proposal.cards[0],
+      recipe: [
+        {
+          atom: "mint",
+          params: {
+            chainId: 999,
+            poolAddress: "0x3333333333333333333333333333333333333333",
+            tickLower: -1200,
+            tickUpper: 1200,
+            token0Amount: "0",
+            token1Amount: "12000000000000000",
+          },
+        },
+      ],
+    };
+
+    const result = await handler(proposal);
+
+    expect(result.status).toBe("error");
+    if (result.status !== "error") throw new Error("expected error result");
+    expect(result).toMatchObject({ code: "INVALID_ARGS" });
+    expect(result.message).toContain("single-sided");
+  });
+
   it("accepts proposal when getPairAvailableUsd returns enough USD", async () => {
     const pushProposal = vi.fn();
     const handler = createProposeLpPositionsHandler({
