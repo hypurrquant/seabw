@@ -13,7 +13,7 @@
     "test": "pnpm --filter @seabw/web run test",
     "lint": "pnpm --filter @seabw/web run lint",
     "typecheck": "pnpm --filter @seabw/web exec tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e:manual": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

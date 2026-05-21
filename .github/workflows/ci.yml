@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  verify:
+    name: typecheck / lint / test / build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # ------------------------------------------------------------------
+      # 1. Check out seabw at $GITHUB_WORKSPACE (default path).
+      #    This lets pnpm-workspace.yaml's relative reference
+      #      ../../side-project/HypurrQuant_FE/worktrees/seabw-integration/packages/*
+      #    resolve to <runner home>/work/side-project/... when we clone HQ
+      #    there in the next step (see HQ_BASE computation).
+      # ------------------------------------------------------------------
+      - name: Checkout seabw
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------
+      # 2. Manually clone HQ worktree to the sibling path that
+      #    pnpm-workspace.yaml expects. actions/checkout can't write
+      #    outside $GITHUB_WORKSPACE, so we use plain git here.
+      #
+      #    If HypurrQuant_FE is private, register HQ_CLONE_TOKEN in
+      #    repo Settings → Secrets and variables → Actions. PRs from
+      #    forks won't have this secret — the job will fail clearly.
+      # ------------------------------------------------------------------
+      - name: Clone HQ worktree
+        env:
+          HQ_TOKEN: ${{ secrets.HQ_CLONE_TOKEN }}
+        run: |
+          set -euo pipefail
+          # pnpm-workspace.yaml refers to "../../side-project/..." from the
+          # seabw repo root, i.e. two levels above $GITHUB_WORKSPACE.
+          HQ_BASE="$(cd "${GITHUB_WORKSPACE}/../.." && pwd)/side-project/HypurrQuant_FE/worktrees"
+          HQ_DEST="${HQ_BASE}/seabw-integration"
+          mkdir -p "${HQ_BASE}"
+          AUTH=""
+          if [ -n "${HQ_TOKEN:-}" ]; then
+            AUTH="x-access-token:${HQ_TOKEN}@"
+          fi
+          git clone --depth=1 --branch feat/seabw-integration \
+            "https://${AUTH}github.com/hypurrquant/HypurrQuant_FE.git" \
+            "${HQ_DEST}"
+          echo "HQ cloned to: ${HQ_DEST}"
+          ls "${HQ_DEST}/packages"
+
+      # ------------------------------------------------------------------
+      # 3. Toolchain
+      # ------------------------------------------------------------------
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # ------------------------------------------------------------------
+      # 4. Install
+      # ------------------------------------------------------------------
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ------------------------------------------------------------------
+      # 5. Gates (run sequentially so failures surface clearly)
+      # ------------------------------------------------------------------
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build (demo env)
+        env:
+          NEXT_PUBLIC_DEFIPILOT_ENV: demo
+          DEFIPILOT_ENV: demo
+          DEFIPILOT_DEMO_BANNER: "true"
+          NEXT_PUBLIC_DEFAULT_CHAIN_ID: "8453"
+          NEXT_PUBLIC_HQ_ORIGIN: http://localhost:3003
+          NEXT_PUBLIC_HQ_BASE_URL: http://localhost:3003/api/v1
+        run: pnpm build

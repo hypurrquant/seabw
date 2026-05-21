@@ -1,7 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// E2E gate is out of scope for v1.2.2. This config keeps playwright loadable
+// (so `npx playwright test --list` works) but assumes HQ + web are already
+// running externally. See docs/phases/v1.2.2-production-readiness/dod.md.
 const PORT = process.env.PLAYWRIGHT_PORT ?? "3000";
-const SERVER_PORT = process.env.PLAYWRIGHT_SERVER_PORT ?? "4000";
+const HQ_PORT = process.env.PLAYWRIGHT_HQ_PORT ?? "3003";
 const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
@@ -15,35 +18,18 @@ export default defineConfig({
     trace: "on-first-retry",
     video: "off",
   },
-  webServer: [
-    {
-      command: `pnpm --filter @seabw/server start:dev`,
-      url: `http://localhost:${SERVER_PORT}`,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      env: {
-        PORT: SERVER_PORT,
-        DEFIPILOT_ENV: "demo",
-        DEFIPILOT_DEFI_CLI: "off",
-        DEFIPILOT_USE_FIXTURES: "true",
-      },
-    },
-    {
-      command: `pnpm --filter @seabw/web dev`,
-      url: BASE_URL,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      env: {
-        NEXT_PUBLIC_E2E: "1",
-        NEXT_PUBLIC_API_BASE_URL: `http://localhost:${SERVER_PORT}`,
-        NEXT_PUBLIC_DEFAULT_CHAIN_ID: "8453",
-      },
-    },
-  ],
+  // webServer omitted intentionally: e2e is currently a manual workflow.
+  // To run locally: start HQ on :3003, then `pnpm --filter @seabw/web dev` on :3000,
+  // then `pnpm exec playwright test`.
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        extraHTTPHeaders: {
+          "x-playwright-hq-port": HQ_PORT,
+        },
+      },
     },
   ],
 });
