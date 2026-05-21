@@ -8,6 +8,7 @@ import { createBrowserToolRegistry } from "../tools";
 import { createProposeLpPositionsHandler } from "../tools/propose-lp-positions";
 import { useLpProposalStore } from "../store/useLpProposalStore";
 import { buildRegistryDeps } from "../runtime/registry-deps";
+import { getPairAvailableUsd } from "../runtime/pair-available-usd";
 import { InMemoryChatHistoryAdapter } from "../runtime/in-memory-chat-history";
 
 let __hqAgentInitialized = false;
@@ -35,6 +36,7 @@ export function AgentRuntimeProvider({ children }: { children: ReactNode }) {
       "propose_lp_positions",
       createProposeLpPositionsHandler({
         pushProposal: (proposal) => useLpProposalStore.getState().push(proposal),
+        getPairAvailableUsd,
       }),
     );
 

@@ -114,6 +114,14 @@ export type LpProposal = z.infer<typeof LpProposalSchema>;
 
 type Deps = {
   pushProposal: (proposal: LpProposal) => void;
+  /** Returns sum of (token0 valueUsd + token1 valueUsd) actually held by the
+   *  user on `chainId`. Return null if balance/price data not yet hydrated —
+   *  handler will skip the cap check rather than block UX on cold start. */
+  getPairAvailableUsd?: (
+    chainId: number,
+    token0Address: string,
+    token1Address: string,
+  ) => number | null;
 };
 
 export function createProposeLpPositionsHandler(deps: Deps) {
@@ -127,6 +135,34 @@ export function createProposeLpPositionsHandler(deps: Deps) {
           .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
           .join("; ")}`,
       };
+    }
+
+    // Structural guard: AI keeps hallucinating suggestedAmountUsd above user's
+    // actual balance even when system prompt forbids it. Reject the whole
+    // proposal so AI must regenerate with realistic numbers.
+    if (deps.getPairAvailableUsd) {
+      const issues: string[] = [];
+      for (const card of parsed.data.cards) {
+        const available = deps.getPairAvailableUsd(
+          card.chainId,
+          card.pair.base.address,
+          card.pair.quote.address,
+        );
+        if (available == null) continue;
+        // 1c tolerance for float noise.
+        if (card.position.suggestedAmountUsd > available + 0.01) {
+          issues.push(
+            `card #${card.rank} ${card.pair.base.symbol}/${card.pair.quote.symbol}: suggested $${card.position.suggestedAmountUsd.toFixed(2)} exceeds user's pair holdings $${available.toFixed(2)}`,
+          );
+        }
+      }
+      if (issues.length > 0) {
+        return {
+          status: "error",
+          code: "INVALID_ARGS",
+          message: `LpProposal rejected — suggestedAmountUsd exceeds user's actual token holdings for the pair. Call get_enriched_balances({chainId: 999}) first, then lower each card's suggestedAmountUsd to fit within (token0 valueUsd + token1 valueUsd). Do not invent default amounts. Issues: ${issues.join("; ")}`,
+        };
+      }
     }
 
     const proposal: LpProposal = {

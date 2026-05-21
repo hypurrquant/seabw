@@ -126,4 +126,47 @@ describe("createProposeLpPositionsHandler", () => {
     expect(result).toMatchObject({ code: "INVALID_ARGS" });
     expect(result.message).toContain("recipe");
   });
+
+  it("rejects proposal when any card.suggestedAmountUsd exceeds user's pair USD", async () => {
+    const pushProposal = vi.fn();
+    const handler = createProposeLpPositionsHandler({
+      pushProposal,
+      getPairAvailableUsd: () => 1.39,
+    });
+    // Default makeCard suggests $100; user only has $1.39 — all 3 should be flagged.
+    const result = await handler(makeProposal());
+
+    expect(result.status).toBe("error");
+    if (result.status !== "error") throw new Error("expected error result");
+    expect(result).toMatchObject({ code: "INVALID_ARGS" });
+    expect(result.message).toContain("suggestedAmountUsd exceeds");
+    expect(result.message).toContain("1.39");
+    expect(pushProposal).not.toHaveBeenCalled();
+  });
+
+  it("accepts proposal when getPairAvailableUsd returns null (data not hydrated)", async () => {
+    const pushProposal = vi.fn();
+    const handler = createProposeLpPositionsHandler({
+      pushProposal,
+      getPairAvailableUsd: () => null,
+    });
+
+    const result = await handler(makeProposal());
+
+    expect(result).toEqual({ status: "success", data: { received: true, cardCount: 3 } });
+    expect(pushProposal).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts proposal when getPairAvailableUsd returns enough USD", async () => {
+    const pushProposal = vi.fn();
+    const handler = createProposeLpPositionsHandler({
+      pushProposal,
+      getPairAvailableUsd: () => 500, // enough for each $100 card
+    });
+
+    const result = await handler(makeProposal());
+
+    expect(result.status).toBe("success");
+    expect(pushProposal).toHaveBeenCalledTimes(1);
+  });
 });
