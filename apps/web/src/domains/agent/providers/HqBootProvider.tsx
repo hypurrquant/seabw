@@ -7,7 +7,11 @@ import type { PlatformExecuteResult } from "@hq/core/defi/pipeline/types";
 import { initPlatformDeps } from "@hq/react/platform";
 import { hydrateTokenConfig } from "@hq/react/token";
 import { hydratePoolConfig } from "@hq/react/defi/lp/pool";
-import { sendTransaction, signMessage as signMessageAction } from "wagmi/actions";
+import {
+  sendTransaction,
+  signMessage as signMessageAction,
+  waitForTransactionReceipt,
+} from "wagmi/actions";
 import { getWagmiConfig } from "@/lib/wagmi";
 
 let __hqPlatformInitialized = false;
@@ -18,11 +22,20 @@ async function execute(
   request: ExecutionRequest,
   _description: string | null,
 ): Promise<PlatformExecuteResult> {
-  const hash = await sendTransaction(getWagmiConfig(), {
+  const config = getWagmiConfig();
+  const hash = await sendTransaction(config, {
     chainId: request.chainId,
     to: request.call.to,
     data: request.call.data,
     value: request.call.value,
+  });
+  // HQ executeResolvedPipeline calls getTransactionReceipt({hash}) immediately
+  // after this returns — no polling. We must wait for the receipt here so that
+  // call doesn't throw TransactionReceiptNotFoundError.
+  await waitForTransactionReceipt(config, {
+    hash,
+    chainId: request.chainId,
+    timeout: 90_000,
   });
   return { hash };
 }
